@@ -32,11 +32,14 @@ public class AuthService {
         if (userRepository.existsByEmail(req.email())) {
             throw new ConflictException("Email already registered: " + req.email());
         }
+        // Only CONTESTANT and ORGANIZER can be self-assigned; ADMIN is DB-only
+        Role role = "ORGANIZER".equalsIgnoreCase(req.role()) ? Role.ORGANIZER : Role.CONTESTANT;
+
         var user = User.builder()
                 .username(req.username())
                 .email(req.email())
                 .passwordHash(passwordEncoder.encode(req.password()))
-                .role(Role.CONTESTANT)
+                .role(role)
                 .build();
         user = userRepository.save(user);
         return toDto(user);

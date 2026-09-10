@@ -39,7 +39,7 @@ public class ProblemController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProblemDetailDto> create(
             @Valid @RequestBody CreateProblemRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -48,7 +48,7 @@ public class ProblemController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProblemDetailDto> update(
             @PathVariable Long id,
             @RequestBody UpdateProblemRequest req) {
@@ -63,7 +63,7 @@ public class ProblemController {
     }
 
     @PatchMapping("/{id}/visibility")
-    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> setVisibility(
             @PathVariable Long id,
             @RequestParam boolean visible) {

@@ -32,7 +32,7 @@ public class TestCaseController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TestCaseDto> create(
             @PathVariable Long problemId,
             @Valid @RequestBody CreateTestCaseRequest req) {
@@ -40,7 +40,7 @@ public class TestCaseController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TestCaseDto> update(
             @PathVariable Long problemId,
             @PathVariable Long id,
@@ -49,7 +49,7 @@ public class TestCaseController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(
             @PathVariable Long problemId,
             @PathVariable Long id) {
