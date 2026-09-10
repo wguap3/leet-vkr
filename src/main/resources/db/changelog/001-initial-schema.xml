@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001" author="stackr">
+
+        <!-- users -->
+        <createTable tableName="users">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="avatar_url" type="VARCHAR(500)"/>
+            <column name="registered_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- tags -->
+        <createTable tableName="tags">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- problems -->
+        <createTable tableName="problems">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="difficulty" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="time_limit_ms" type="INT" defaultValueNumeric="2000">
+                <constraints nullable="false"/>
+            </column>
+            <column name="memory_limit_mb" type="INT" defaultValueNumeric="256">
+                <constraints nullable="false"/>
+            </column>
+            <column name="author_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_problem_author" references="users(id)"/>
+            </column>
+            <column name="code_template" type="TEXT"/>
+            <column name="visible" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- problem_tags -->
+        <createTable tableName="problem_tags">
+            <column name="problem_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_pt_problem" references="problems(id)" deleteCascade="true"/>
+            </column>
+            <column name="tag_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_pt_tag" references="tags(id)"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="problem_tags" columnNames="problem_id,tag_id"/>
+
+        <!-- test_cases -->
+        <createTable tableName="test_cases">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="problem_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_tc_problem" references="problems(id)" deleteCascade="true"/>
+            </column>
+            <column name="input_data" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expected_output" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_public" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="order_index" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- contests -->
+        <createTable tableName="contests">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="start_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="organizer_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_contest_organizer" references="users(id)"/>
+            </column>
+            <column name="is_public" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- contest_problems -->
+        <createTable tableName="contest_problems">
+            <column name="contest_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_cp_contest" references="contests(id)" deleteCascade="true"/>
+            </column>
+            <column name="problem_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_cp_problem" references="problems(id)"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="contest_problems" columnNames="contest_id,problem_id"/>
+
+        <!-- submissions -->
+        <createTable tableName="submissions">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_sub_user" references="users(id)"/>
+            </column>
+            <column name="problem_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_sub_problem" references="problems(id)"/>
+            </column>
+            <column name="contest_id" type="BIGINT">
+                <constraints foreignKeyName="fk_sub_contest" references="contests(id)"/>
+            </column>
+            <column name="source_code" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="verdict" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="execution_time_ms" type="INT"/>
+            <column name="memory_used_mb" type="INT"/>
+            <column name="error_message" type="TEXT"/>
+            <column name="submitted_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- contest_participations -->
+        <createTable tableName="contest_participations">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_cp2_user" references="users(id)"/>
+            </column>
+            <column name="contest_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_cp2_contest" references="contests(id)"/>
+            </column>
+            <column name="score" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="penalty" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="submission_count" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="registered_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="contest_participations" columnNames="user_id,contest_id"/>
+
+        <!-- Indexes -->
+        <createIndex tableName="submissions" indexName="idx_sub_user_id">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="submissions" indexName="idx_sub_problem_id">
+            <column name="problem_id"/>
+        </createIndex>
+        <createIndex tableName="users" indexName="idx_users_rating">
+            <column name="rating" descending="true"/>
+        </createIndex>
+
+    </changeSet>
+</databaseChangeLog>

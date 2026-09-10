@@ -1,0 +1,13 @@
+.rank { font-size: 13px; font-weight: 700; color: var(--text-4); font-variant-numeric: tabular-nums; min-width: 40px; }
+.gold   { color: #f59e0b !important; }
+.silver { color: #94a3b8 !important; }
+.bronze { color: #c47b3e !important; }
+.userCell { display: flex; align-items: center; gap: 10px; }
+.avatar {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--violet), #a78bfa);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff; overflow: hidden;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.rating { font-weight: 700; color: var(--violet) !important; }

@@ -1,0 +1,14 @@
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 16px; }
+.contestCard {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 20px 22px; text-decoration: none !important;
+  border-radius: var(--radius-lg);
+  transition: border-color .15s, box-shadow .15s;
+}
+.contestCard:hover {
+  border-color: rgba(139,92,246,.5);
+  box-shadow: 0 0 0 1px rgba(139,92,246,.15), 0 8px 32px rgba(0,0,0,.35);
+}
+.cardTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.cardTitle { font-size: 15px; font-weight: 600; color: var(--text-1); line-height: 1.4; }
+.cardMeta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; color: var(--text-3); }

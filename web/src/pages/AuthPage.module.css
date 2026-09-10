@@ -1,0 +1,24 @@
+.wrapper {
+  min-height: calc(100vh - 56px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background: radial-gradient(ellipse 50% 60% at 50% -10%, rgba(139,92,246,.12), transparent);
+}
+.card { width: 100%; max-width: 380px; padding: 32px; border-radius: 16px; }
+.logoMark {
+  text-align: center; font-size: 24px; font-weight: 800;
+  background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; letter-spacing: -.04em; margin-bottom: 20px;
+}
+.title { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+.subtitle { font-size: 14px; color: var(--text-3); text-align: center; margin-bottom: 22px; }
+.form { display: flex; flex-direction: column; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 12px; font-weight: 600; color: var(--text-3); letter-spacing: .02em; text-transform: uppercase; }
+.error {
+  padding: 10px 12px; border-radius: var(--radius-md);
+  background: var(--red-dim); color: var(--red);
+  border: 1px solid rgba(239,68,68,.2); font-size: 13px;
+}
+.footer { text-align: center; margin-top: 18px; font-size: 13px; color: var(--text-3); }

@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: stackr-api
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/main_db}
+    username: ${SPRING_DATASOURCE_USERNAME:main_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+
+server:
+  port: 8080
+  error:
+    include-message: always
+
+jwt:
+  # Generate with: openssl rand -base64 32
+  secret: dGhpcyBpcyBhIHZlcnkgc2VjcmV0IGtleSBmb3Igc3RhY2ty
+  access-token-ttl: 86400  # 24 hours in seconds
+
+runner:
+  url: http://localhost:8081
+
+logging:
+  level:
+    com.stackr: DEBUG
+    org.springframework.security: WARN

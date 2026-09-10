@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: stackr-runner
+
+server:
+  port: 8081
+
+logging:
+  level:
+    com.stackr.runner: DEBUG
