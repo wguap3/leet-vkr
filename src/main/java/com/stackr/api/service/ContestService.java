@@ -340,6 +340,6 @@ public class ContestService {
                     return new ProblemShortDto(p.getId(), p.getTitle(), p.getDifficulty(), tags, solved, null);
                 }).toList();
         return new ContestDetailDto(c.getId(), c.getTitle(), c.getDescription(),
-                c.getStartTime(), c.getEndTime(), c.getStatus(), problems, registered);
+                c.getStartTime(), c.getEndTime(), c.getStatus(), problems, registered, c.isPublic());
     }
 }

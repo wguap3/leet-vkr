@@ -37,7 +37,8 @@ public class ContestController {
     public ResponseEntity<ContestDetailDto> getById(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(contestService.getContestById(id, principal.getId()));
+        Long uid = principal != null ? principal.getId() : null;
+        return ResponseEntity.ok(contestService.getContestById(id, uid));
     }
 
     @PostMapping
@@ -66,7 +67,7 @@ public class ContestController {
     }
 
     @PostMapping("/{id}/register")
-    @PreAuthorize("hasRole('CONTESTANT')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> register(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {

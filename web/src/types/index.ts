@@ -86,6 +86,7 @@ export interface ContestDetail {
   status: ContestStatus
   problems: ProblemShort[]
   isRegistered: boolean
+  isPublic: boolean
 }
 
 export interface LeaderboardEntry {

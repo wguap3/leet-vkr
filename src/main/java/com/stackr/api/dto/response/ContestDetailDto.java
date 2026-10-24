@@ -14,5 +14,6 @@ public record ContestDetailDto(
         LocalDateTime endTime,
         ContestStatus status,
         List<ProblemShortDto> problems,
-        @JsonProperty("isRegistered") boolean isRegistered
+        @JsonProperty("isRegistered") boolean isRegistered,
+        @JsonProperty("isPublic") boolean isPublic
 ) {}

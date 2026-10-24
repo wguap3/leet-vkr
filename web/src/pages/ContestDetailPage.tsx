@@ -110,6 +110,9 @@ export default function ContestDetailPage() {
             <span className={`badge badge-${STATUS_BADGE[contest.status]}`}>
               {STATUS_LABELS[contest.status]}
             </span>
+            <span className={'badge ' + (contest.isPublic ? 'badge-ac' : 'badge-wa')} style={{ fontSize: 11 }}>
+              {contest.isPublic ? '🌐 Публичный' : '🔒 Приватный'}
+            </span>
             <span style={{ fontSize: 13, color: 'var(--text-2)' }}>
               {new Date(contest.startTime).toLocaleString('ru-RU')} — {new Date(contest.endTime).toLocaleString('ru-RU')}
             </span>

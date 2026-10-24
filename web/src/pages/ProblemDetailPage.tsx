@@ -70,7 +70,7 @@ export default function ProblemDetailPage() {
   const [customInput, setCustomInput] = useState('')
   const [runResult, setRunResult] = useState<RunCodeResult | null>(null)
   const [running, setRunning] = useState(false)
-  const [showCustomTest, setShowCustomTest] = useState(false)
+  const [showCustomTest, setShowCustomTest] = useState(true)
 
   // Hints
   const [hints, setHints] = useState<Hint[]>([])
@@ -98,6 +98,8 @@ export default function ProblemDetailPage() {
   const handleCodeChange = (v: string | undefined) => {
     const val = v ?? ''
     setCode(val)
+    setLastSubmission(null)   // сбрасываем устаревший вердикт при изменении кода
+    setRunResult(null)
     clearTimeout(autoSaveTimer.current)
     autoSaveTimer.current = setTimeout(() => {
       try { localStorage.setItem(storageKey, val) } catch {}
@@ -389,7 +391,7 @@ export default function ProblemDetailPage() {
               className="btn btn-outline btn-sm"
               onClick={() => setShowCustomTest(v => !v)}
             >
-              {showCustomTest ? '▾ Тест' : '▸ Тест'}
+              {showCustomTest ? '▾ Скрыть тест' : '▸ Свой тест'}
             </button>
             <button className="btn btn-primary btn-sm" onClick={handleSubmit} disabled={submitting}>
               {submitting ? <><span className="spinner" /> Отправка…</> : '▶ Отправить'}
