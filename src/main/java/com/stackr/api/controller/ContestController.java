@@ -67,7 +67,7 @@ public class ContestController {
     }
 
     @PostMapping("/{id}/register")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('CONTESTANT')")
     public ResponseEntity<Void> register(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
