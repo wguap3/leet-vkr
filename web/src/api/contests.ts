@@ -27,3 +27,15 @@ export const createContest = (data: {
 
 export const getContestStandings = (id: number) =>
   api.get<import('../types').ContestStandings>(`/contests/${id}/standings`)
+
+export const updateContest = (id: number, data: {
+  title?: string
+  description?: string
+  startTime?: string
+  endTime?: string
+  problemIds?: number[]
+  isPublic?: boolean
+}) => api.put<import('../types').ContestDetail>(`/contests/${id}`, data)
+
+export const deleteContest = (id: number) =>
+  api.delete(`/contests/${id}`)

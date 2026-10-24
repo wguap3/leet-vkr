@@ -15,6 +15,7 @@ import CreateContestPage from './pages/CreateContestPage'
 import ContestAnalyticsPage from './pages/ContestAnalyticsPage'
 import ContestStandingsPage from './pages/ContestStandingsPage'
 import EditProblemPage from './pages/EditProblemPage'
+import EditContestPage from './pages/EditContestPage'
 import AdminPanel from './pages/AdminPanel'
 import TestCasesPage from './pages/TestCasesPage'
 import { useAuthStore } from './store/authStore'
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="/problems/:id" element={<ProtectedRoute><ProblemDetailPage /></ProtectedRoute>} />
         <Route path="/contests" element={<ProtectedRoute><ContestsPage /></ProtectedRoute>} />
         <Route path="/contests/new" element={<OrganizerRoute><CreateContestPage /></OrganizerRoute>} />
+        <Route path="/contests/:id/edit" element={<OrganizerRoute><EditContestPage /></OrganizerRoute>} />
         <Route path="/contests/:id" element={<ProtectedRoute><ContestDetailPage /></ProtectedRoute>} />
         <Route path="/contests/:id/analytics" element={<OrganizerRoute><ContestAnalyticsPage /></OrganizerRoute>} />
         <Route path="/contests/:id/standings" element={<ProtectedRoute><ContestStandingsPage /></ProtectedRoute>} />

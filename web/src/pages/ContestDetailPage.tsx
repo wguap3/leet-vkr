@@ -118,7 +118,10 @@ export default function ContestDetailPage() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <Link to={`/contests/${id}/standings`} className="btn btn-outline btn-sm">🏆 Standings</Link>
         {canOrganize && (
+          <>
+          <Link to={`/contests/${id}/edit`} className="btn btn-outline btn-sm">✏️ Редактировать</Link>
           <Link to={`/contests/${id}/analytics`} className="btn btn-outline btn-sm">📊 Аналитика</Link>
+          </>
         )}
         {!contest.isRegistered && contest.status !== 'FINISHED' && (
           <button className="btn btn-primary" onClick={handleRegister} disabled={registering}>
