@@ -40,7 +40,7 @@ public class ProblemController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
     public ResponseEntity<ProblemDetailDto> create(
             @Valid @RequestBody CreateProblemRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -49,17 +49,20 @@ public class ProblemController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
     public ResponseEntity<ProblemDetailDto> update(
             @PathVariable Long id,
-            @RequestBody UpdateProblemRequest req) {
-        return ResponseEntity.ok(problemService.updateProblem(id, req));
+            @RequestBody UpdateProblemRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(problemService.updateProblem(id, req, principal.getId()));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        problemService.deleteProblem(id);
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        problemService.deleteProblem(id, principal.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -69,11 +72,12 @@ public class ProblemController {
     }
 
     @PatchMapping("/{id}/visibility")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
     public ResponseEntity<Void> setVisibility(
             @PathVariable Long id,
-            @RequestParam boolean visible) {
-        problemService.setVisibility(id, visible);
+            @RequestParam boolean visible,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        problemService.setVisibility(id, visible, principal.getId());
         return ResponseEntity.ok().build();
     }
 }

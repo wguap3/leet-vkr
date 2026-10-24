@@ -143,7 +143,7 @@ class ProblemServiceTest {
         given(testCaseRepository.findByProblemIdAndIsPublicTrueOrderByOrderIndexAsc(10L))
                 .willReturn(List.of());
 
-        ProblemDetailDto dto = problemService.updateProblem(10L, req);
+        ProblemDetailDto dto = problemService.updateProblem(10L, req, 1L);
 
         assertThat(problem.getTitle()).isEqualTo("New Title");
         assertThat(problem.getDifficulty()).isEqualTo(Difficulty.HARD);
@@ -154,9 +154,9 @@ class ProblemServiceTest {
     @Test
     @DisplayName("deleteProblem: задача существует → удаляется")
     void deleteProblem_exists_deletesSuccessfully() {
-        given(problemRepository.existsById(10L)).willReturn(true);
+        given(problemRepository.findById(10L)).willReturn(Optional.of(problem));
 
-        problemService.deleteProblem(10L);
+        problemService.deleteProblem(10L, 1L);
 
         then(problemRepository).should().deleteById(10L);
     }
@@ -164,9 +164,9 @@ class ProblemServiceTest {
     @Test
     @DisplayName("deleteProblem: задача не найдена → EntityNotFoundException")
     void deleteProblem_notFound_throws() {
-        given(problemRepository.existsById(99L)).willReturn(false);
+        given(problemRepository.findById(99L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> problemService.deleteProblem(99L))
+        assertThatThrownBy(() -> problemService.deleteProblem(99L, 1L))
                 .isInstanceOf(EntityNotFoundException.class);
     }
 
@@ -179,7 +179,7 @@ class ProblemServiceTest {
         given(problemRepository.findById(10L)).willReturn(Optional.of(problem));
         given(problemRepository.save(any())).willReturn(problem);
 
-        problemService.setVisibility(10L, true);
+        problemService.setVisibility(10L, true, 1L);
 
         assertThat(problem.isVisible()).isTrue();
         then(problemRepository).should().save(problem);

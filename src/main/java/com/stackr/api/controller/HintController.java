@@ -35,7 +35,7 @@ public class HintController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
     public ResponseEntity<HintDto> create(
             @PathVariable Long problemId,
             @Valid @RequestBody CreateHintRequest req) {
@@ -44,7 +44,7 @@ public class HintController {
     }
 
     @DeleteMapping("/{hintId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
     public ResponseEntity<Void> delete(
             @PathVariable Long problemId,
             @PathVariable Long hintId) {

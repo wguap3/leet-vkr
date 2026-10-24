@@ -10,6 +10,8 @@ import com.stackr.api.dto.response.TestCaseDto;
 import com.stackr.api.entity.Problem;
 import com.stackr.api.entity.enums.Difficulty;
 import com.stackr.api.entity.enums.Verdict;
+import com.stackr.api.entity.enums.Role;
+import com.stackr.api.exception.BusinessException;
 import com.stackr.api.exception.EntityNotFoundException;
 import com.stackr.api.repository.ProblemRepository;
 import com.stackr.api.repository.SubmissionRepository;
@@ -92,8 +94,9 @@ public class ProblemService {
     }
 
     @Transactional
-    public ProblemDetailDto updateProblem(Long id, UpdateProblemRequest req) {
+    public ProblemDetailDto updateProblem(Long id, UpdateProblemRequest req, Long userId) {
         var problem = findOrThrow(id);
+        checkOwnership(problem, userId, "update");
 
         if (req.title() != null) problem.setTitle(req.title());
         if (req.description() != null) problem.setDescription(req.description());
@@ -110,16 +113,16 @@ public class ProblemService {
     }
 
     @Transactional
-    public void deleteProblem(Long id) {
-        if (!problemRepository.existsById(id)) {
-            throw new EntityNotFoundException("Problem not found: " + id);
-        }
+    public void deleteProblem(Long id, Long userId) {
+        var problem = findOrThrow(id);
+        checkOwnership(problem, userId, "delete");
         problemRepository.deleteById(id);
     }
 
     @Transactional
-    public void setVisibility(Long id, boolean visible) {
+    public void setVisibility(Long id, boolean visible, Long userId) {
         var problem = findOrThrow(id);
+        checkOwnership(problem, userId, "change visibility of");
         problem.setVisible(visible);
         problemRepository.save(problem);
     }
@@ -144,6 +147,16 @@ public class ProblemService {
         Double avgMs = submissionRepository.avgExecutionTimeByProblemId(id);
         double rate = total == 0 ? 0.0 : (ac * 100.0 / total);
         return new ProblemStatsDto(id, total, ac, wa, tle, re, ce, avgMs, rate);
+    }
+
+    private void checkOwnership(Problem problem, Long userId, String action) {
+        if (!problem.getAuthor().getId().equals(userId)) {
+            var caller = userRepository.findById(userId)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
+            if (caller.getRole() != Role.ADMIN) {
+                throw new BusinessException("Not authorized to " + action + " this problem");
+            }
+        }
     }
 
     private Problem findOrThrow(Long id) {
