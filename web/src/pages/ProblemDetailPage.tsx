@@ -58,6 +58,9 @@ export default function ProblemDetailPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [lastSubmission, setLastSubmission] = useState<Submission | null>(null)
+  const [submissionHistory, setSubmissionHistory] = useState<Submission[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyLoaded, setHistoryLoaded] = useState(false)
   const [tab, setTab] = useState<'description' | 'hints' | 'stats' | 'submissions'>('description')
 
   // Custom test
@@ -73,6 +76,19 @@ export default function ProblemDetailPage() {
   // Stats
   const [stats, setStats] = useState<ProblemStats | null>(null)
   const [statsLoading, setStatsLoading] = useState(false)
+
+  // Load submission history when tab opens
+  useEffect(() => {
+    if (tab !== 'submissions') return
+    setHistoryLoading(true)
+    import('../api/client').then(m =>
+      m.default.get<{ content: Submission[] }>(`/submissions/my?problemId=${pid}&size=20`)
+    ).then(({ data }) => {
+      setSubmissionHistory(data.content)
+      if (data.content.length > 0) setLastSubmission(data.content[0])
+      setHistoryLoaded(true)
+    }).catch(() => {}).finally(() => setHistoryLoading(false))
+  }, [tab, pid])
 
   // Autosave
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>()
@@ -138,6 +154,14 @@ export default function ProblemDetailPage() {
             setLastSubmission(sub)
             // Refresh hints after submission (unlock state may change)
             setHints([])
+            // Refresh submission history
+            setHistoryLoaded(false)
+            import('../api/client').then(m =>
+              m.default.get<{ content: Submission[] }>(`/submissions/my?problemId=${pid}&size=20`)
+            ).then(({ data }) => {
+              setSubmissionHistory(data.content)
+              setHistoryLoaded(true)
+            }).catch(() => {})
           }
         } catch { clearInterval(poll) }
       }, 1500)
@@ -279,9 +303,11 @@ export default function ProblemDetailPage() {
         {/* SUBMISSIONS */}
         {tab === 'submissions' && (
           <div className={styles.submissionsPanel}>
-            {lastSubmission ? (
-              <div className={styles.resultCard}>
+            {/* Latest result banner */}
+            {lastSubmission && (
+              <div className={styles.resultCard} style={{ marginBottom: 16 }}>
                 <div className={styles.resultRow}>
+                  <span style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 500 }}>Последняя посылка:</span>
                   <VerdictBadge v={lastSubmission.verdict} />
                   {lastSubmission.executionTimeMs != null && (
                     <span style={{ fontSize: 13, color: 'var(--text-3)' }}>{lastSubmission.executionTimeMs} мс</span>
@@ -291,8 +317,45 @@ export default function ProblemDetailPage() {
                   )}
                 </div>
               </div>
+            )}
+
+            {/* History table */}
+            {historyLoading ? (
+              <div className="empty-state"><span className="spinner" /></div>
+            ) : submissionHistory.length > 0 ? (
+              <table className="table" style={{ fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Вердикт</th>
+                    <th>Время</th>
+                    <th>Память</th>
+                    <th>Отправлено</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {submissionHistory.map((s, i) => (
+                    <tr key={s.id} style={{ opacity: s.verdict === 'PENDING' ? 0.6 : 1 }}>
+                      <td style={{ color: 'var(--text-3)' }}>{i + 1}</td>
+                      <td><VerdictBadge v={s.verdict} /></td>
+                      <td style={{ color: 'var(--text-2)' }}>
+                        {s.executionTimeMs != null ? `${s.executionTimeMs} мс` : '—'}
+                      </td>
+                      <td style={{ color: 'var(--text-2)' }}>
+                        {s.memoryUsedMb != null ? `${s.memoryUsedMb} МБ` : '—'}
+                      </td>
+                      <td style={{ color: 'var(--text-3)' }}>
+                        {new Date(s.submittedAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : (
-              <div className="empty-state">Посылок пока нет</div>
+              <div className="empty-state" style={{ padding: '40px 0' }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
+                <div style={{ color: 'var(--text-3)' }}>Посылок пока нет — нажми «Отправить»</div>
+              </div>
             )}
           </div>
         )}

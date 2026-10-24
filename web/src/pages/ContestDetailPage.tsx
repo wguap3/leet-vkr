@@ -15,6 +15,28 @@ const DIFF_LABELS: Record<string, string> = {
   EASY: 'Лёгкая', MEDIUM: 'Средняя', HARD: 'Сложная'
 }
 
+
+// ── Countdown ─────────────────────────────────────────────────────────────────
+function useCountdown(targetIso: string | null) {
+  const [ms, setMs] = useState(() => targetIso ? Math.max(0, new Date(targetIso).getTime() - Date.now()) : 0)
+  useEffect(() => {
+    if (!targetIso) return
+    const tick = () => setMs(Math.max(0, new Date(targetIso).getTime() - Date.now()))
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [targetIso])
+  return ms
+}
+
+function fmtCountdown(ms: number) {
+  const s = Math.floor(ms / 1000)
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = s % 60
+  return [h, m, sec].map(v => String(v).padStart(2, '0')).join(':')
+}
+
 export default function ContestDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuthStore()
@@ -24,6 +46,13 @@ export default function ContestDetailPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'problems' | 'leaderboard'>('problems')
   const [registering, setRegistering] = useState(false)
+
+  const countdownTarget = contest?.status === 'RUNNING'
+    ? contest.endTime
+    : contest?.status === 'UPCOMING'
+    ? contest.startTime
+    : null
+  const countdownMs = useCountdown(countdownTarget)
 
   const load = () => {
     contestsApi.getContest(Number(id))
@@ -59,6 +88,24 @@ export default function ContestDetailPage() {
       <div className={styles.header}>
         <div>
           <h1>{contest.title}</h1>
+          {(contest.status === 'RUNNING' || contest.status === 'UPCOMING') && (
+            <div style={{
+              marginTop: 10,
+              fontSize: 22,
+              fontWeight: 800,
+              fontVariantNumeric: 'tabular-nums',
+              letterSpacing: '0.04em',
+              color: contest.status === 'RUNNING'
+                ? (countdownMs < 5 * 60 * 1000 ? 'var(--red)' : countdownMs < 15 * 60 * 1000 ? 'var(--yellow)' : 'var(--green)')
+                : 'var(--text-2)',
+            }}>
+              {contest.status === 'RUNNING' ? '⏱ ' : '🕐 '}
+              {fmtCountdown(countdownMs)}
+              <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-3)', marginLeft: 6 }}>
+                {contest.status === 'RUNNING' ? 'осталось' : 'до начала'}
+              </span>
+            </div>
+          )}
           <div className={styles.meta}>
             <span className={`badge badge-${STATUS_BADGE[contest.status]}`}>
               {STATUS_LABELS[contest.status]}
