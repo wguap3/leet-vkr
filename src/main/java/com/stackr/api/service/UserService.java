@@ -6,11 +6,14 @@ import com.stackr.api.dto.response.UserDto;
 import com.stackr.api.dto.response.UserProfileDto;
 import com.stackr.api.entity.enums.Role;
 import com.stackr.api.entity.enums.Verdict;
+import com.stackr.api.dto.request.ChangePasswordRequest;
+import com.stackr.api.exception.BusinessException;
 import com.stackr.api.exception.EntityNotFoundException;
 import com.stackr.api.repository.SubmissionRepository;
 import com.stackr.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +24,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final SubmissionRepository submissionRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public UserProfileDto getProfile(Long userId) {
@@ -106,6 +110,16 @@ public class UserService {
                         totalMap.getOrDefault(e.getKey(), 0L)))
                 .sorted(java.util.Comparator.comparing(TagProgressDto::tagName))
                 .toList();
+    }
+
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest req) {
+        var user = findOrThrow(userId);
+        if (!passwordEncoder.matches(req.oldPassword(), user.getPasswordHash())) {
+            throw new BusinessException("Неверный текущий пароль");
+        }
+        user.setPasswordHash(passwordEncoder.encode(req.newPassword()));
+        userRepository.save(user);
     }
 
     @Transactional

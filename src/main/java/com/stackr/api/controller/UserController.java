@@ -1,5 +1,6 @@
 package com.stackr.api.controller;
 
+import com.stackr.api.dto.request.ChangePasswordRequest;
 import com.stackr.api.dto.request.UpdateProfileRequest;
 import com.stackr.api.dto.response.TagProgressDto;
 import com.stackr.api.dto.response.UserDto;
@@ -7,6 +8,7 @@ import com.stackr.api.dto.response.UserProfileDto;
 import com.stackr.api.entity.enums.Role;
 import com.stackr.api.security.UserPrincipal;
 import com.stackr.api.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +40,14 @@ public class UserController {
             @RequestBody UpdateProfileRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(userService.updateProfile(principal.getId(), req));
+    }
+
+    @PostMapping("/me/password")
+    public ResponseEntity<Void> changePassword(
+            @Valid @RequestBody ChangePasswordRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        userService.changePassword(principal.getId(), req);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")

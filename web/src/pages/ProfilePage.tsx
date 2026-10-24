@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client'
+import { changePassword } from '../api/users'
 import type { Submission, TagProgress, UserProfile } from '../types'
 import RatingBadge from '../components/RatingBadge'
 import styles from './ProfilePage.module.css'
@@ -22,6 +23,11 @@ export default function ProfilePage() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [progress, setProgress] = useState<TagProgress[]>([])
   const [loading, setLoading] = useState(true)
+  const [oldPwd, setOldPwd] = useState('')
+  const [newPwd, setNewPwd] = useState('')
+  const [pwdError, setPwdError] = useState('')
+  const [pwdSuccess, setPwdSuccess] = useState(false)
+  const [pwdLoading, setPwdLoading] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -34,6 +40,25 @@ export default function ProfilePage() {
       setProgress(pr.data)
     }).finally(() => setLoading(false))
   }, [])
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault()
+    setPwdError('')
+    setPwdSuccess(false)
+    if (newPwd.length < 6) { setPwdError('Новый пароль должен быть не менее 6 символов'); return }
+    setPwdLoading(true)
+    try {
+      await changePassword(oldPwd, newPwd)
+      setPwdSuccess(true)
+      setOldPwd('')
+      setNewPwd('')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? 'Ошибка смены пароля'
+      setPwdError(msg)
+    } finally {
+      setPwdLoading(false)
+    }
+  }
 
   if (loading) return <div className="empty-state" style={{ marginTop: 80 }}><span className="spinner" /></div>
   if (!profile) return null
@@ -125,6 +150,48 @@ export default function ProfilePage() {
           </table>
         )}
       </div>
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, marginTop: 28 }}>Сменить пароль</h2>
+      <div className="card" style={{ padding: '20px 24px', maxWidth: 420 }}>
+        <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <label style={{ fontSize: 13, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>
+              Текущий пароль
+            </label>
+            <input
+              type="password"
+              className="input"
+              value={oldPwd}
+              onChange={e => setOldPwd(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 13, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>
+              Новый пароль
+            </label>
+            <input
+              type="password"
+              className="input"
+              value={newPwd}
+              onChange={e => setNewPwd(e.target.value)}
+              required
+              minLength={6}
+              autoComplete="new-password"
+            />
+          </div>
+          {pwdError && (
+            <p style={{ color: 'var(--red)', fontSize: 13, margin: 0 }}>{pwdError}</p>
+          )}
+          {pwdSuccess && (
+            <p style={{ color: 'var(--green)', fontSize: 13, margin: 0 }}>Пароль успешно изменён ✓</p>
+          )}
+          <button type="submit" className="btn btn-primary" disabled={pwdLoading} style={{ alignSelf: 'flex-start' }}>
+            {pwdLoading ? 'Сохранение…' : 'Сменить пароль'}
+          </button>
+        </form>
+      </div>
+
     </div>
   )
 }

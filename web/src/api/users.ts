@@ -33,3 +33,6 @@ export const changeRole = (id: number, role: Role) =>
 
 export const setActive = (id: number, active: boolean) =>
   api.patch(`/users/${id}/active?active=${active}`)
+
+export const changePassword = (oldPassword: string, newPassword: string) =>
+  api.post('/users/me/password', { oldPassword, newPassword })
