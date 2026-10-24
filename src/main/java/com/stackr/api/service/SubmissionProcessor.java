@@ -38,10 +38,6 @@ public class SubmissionProcessor {
 
         var testCases = testCaseRepository.findByProblemIdOrderByOrderIndexAsc(problemId);
 
-        // Проверяем первый AC ДО сохранения нового вердикта
-        boolean isFirstAc = !submissionRepository
-                .existsByUserIdAndProblemIdAndVerdict(submission.getUser().getId(), problemId, Verdict.AC);
-
         try {
             var result = runnerClient.run(submissionId, submission.getSourceCode(),
                     testCases, timeLimitMs, memoryLimitMb);
@@ -58,8 +54,13 @@ public class SubmissionProcessor {
 
         submissionRepository.save(submission);
 
+        // isFirstAc check AFTER saving the verdict, not before:
+        // count how many AC submissions now exist for this user+problem.
+        // If exactly 1 (this one), it's the first AC — prevents double-credit race condition.
         if (submission.getVerdict() == Verdict.AC) {
-            if (isFirstAc) {
+            long acCount = submissionRepository.countByUserIdAndProblemIdAndVerdict(
+                    submission.getUser().getId(), problemId, Verdict.AC);
+            if (acCount == 1L) {
                 updateRating(submission.getUser().getId());
             }
             if (submission.getContest() != null) {

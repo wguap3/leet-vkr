@@ -12,6 +12,7 @@ import LeaderboardPage from './pages/LeaderboardPage'
 import CreateProblemPage from './pages/CreateProblemPage'
 import CreateContestPage from './pages/CreateContestPage'
 import ContestAnalyticsPage from './pages/ContestAnalyticsPage'
+import AdminPanel from './pages/AdminPanel'
 import { useAuthStore } from './store/authStore'
 import type { Role } from './types'
 
@@ -25,6 +26,13 @@ function OrganizerRoute({ children }: { children: React.ReactNode }) {
   const allowed: Role[] = ['ORGANIZER', 'ADMIN']
   if (!isAuthenticated()) return <Navigate to="/login" replace />
   if (!user || !allowed.includes(user.role)) return <Navigate to="/problems" replace />
+  return <>{children}</>
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useAuthStore()
+  if (!isAuthenticated()) return <Navigate to="/login" replace />
+  if (!user || user.role !== 'ADMIN') return <Navigate to="/problems" replace />
   return <>{children}</>
 }
 
@@ -45,6 +53,7 @@ export default function App() {
         <Route path="/contests/:id/analytics" element={<OrganizerRoute><ContestAnalyticsPage /></OrganizerRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
+        <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
       </Routes>
     </BrowserRouter>
   )

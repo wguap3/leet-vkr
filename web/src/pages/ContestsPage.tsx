@@ -16,7 +16,7 @@ const STATUS_LABELS: Record<ContestStatus, string> = {
 
 function statusBadge(s: ContestStatus) {
   const map: Record<ContestStatus, string> = {
-    UPCOMING: 'badge-pending', RUNNING: 'badge-ac', FINISHED: 'badge-wa'
+    UPCOMING: `badge-upcoming`, RUNNING: `badge-running`, FINISHED: `badge-finished`
   }
   return <span className={`badge ${map[s]}`}>{STATUS_LABELS[s]}</span>
 }

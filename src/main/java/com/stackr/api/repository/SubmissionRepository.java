@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,8 +33,25 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     boolean existsByUserIdAndProblemIdAndVerdict(Long userId, Long problemId, Verdict verdict);
 
+    long countByUserIdAndProblemIdAndVerdict(Long userId, Long problemId, Verdict verdict);
+
     @Query("SELECT COUNT(DISTINCT s.user.id) FROM Submission s WHERE s.problem.id = :problemId AND s.verdict = :verdict")
     long countDistinctUsersByProblemIdAndVerdict(@Param("problemId") Long problemId, @Param("verdict") Verdict verdict);
+
+    /** Batch version — returns [problemId, distinctUserCount] rows for a set of problem IDs */
+    @Query("SELECT s.problem.id, COUNT(DISTINCT s.user.id) FROM Submission s " +
+           "WHERE s.problem.id IN :problemIds AND s.verdict = :verdict " +
+           "GROUP BY s.problem.id")
+    List<Object[]> countDistinctUsersByProblemIdsAndVerdict(
+            @Param("problemIds") Collection<Long> problemIds,
+            @Param("verdict") Verdict verdict);
+
+    /** Returns the set of problem IDs a user has solved (AC) among the given IDs */
+    @Query("SELECT DISTINCT s.problem.id FROM Submission s " +
+           "WHERE s.user.id = :userId AND s.problem.id IN :problemIds AND s.verdict = 'AC'")
+    List<Long> findSolvedProblemIdsByUserIdAndProblemIds(
+            @Param("userId") Long userId,
+            @Param("problemIds") Collection<Long> problemIds);
 
     Optional<Submission> findFirstByUserIdAndProblemIdAndVerdict(Long userId, Long problemId, Verdict verdict);
 

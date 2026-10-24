@@ -1,20 +1,18 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import * as authApi from '../api/auth'
 import styles from './Navbar.module.css'
 
 export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
 
-  const handleLogout = async () => {
-    try { await authApi.logout() } catch {}
+  const handleLogout = () => {
     logout()
     navigate('/')
   }
 
   const isAdmin = user?.role === 'ADMIN'
-  const canCreateContest = user?.role === 'ORGANIZER' || user?.role === 'ADMIN'
+  const canCreate = user?.role === 'ORGANIZER' || user?.role === 'ADMIN'
   const auth = isAuthenticated()
 
   return (
@@ -29,8 +27,17 @@ export default function Navbar() {
             <NavLink to="/problems" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Задачи</NavLink>
             <NavLink to="/contests" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Контесты</NavLink>
             <NavLink to="/leaderboard" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Рейтинг</NavLink>
-            {isAdmin && <Link to="/problems/new" className={styles.createLink}>+ Задача</Link>}
-            {canCreateContest && <Link to="/contests/new" className={styles.createLink}>+ Контест</Link>}
+            {canCreate && (
+              <div className={styles.createGroup}>
+                {isAdmin && <Link to="/problems/new" className={styles.createLink}>+ Задача</Link>}
+                <Link to="/contests/new" className={styles.createLink}>+ Контест</Link>
+              </div>
+            )}
+            {isAdmin && (
+              <NavLink to="/admin" className={({ isActive }) => isActive ? styles.adminLinkActive : styles.adminLink}>
+                ⚙ Админ
+              </NavLink>
+            )}
           </>}
         </div>
 
@@ -39,14 +46,17 @@ export default function Navbar() {
             <>
               <Link to="/profile" className={styles.userBtn}>
                 <div className={styles.avatar}>{user?.username?.[0]?.toUpperCase()}</div>
-                {user?.username}
+                <span className={styles.username}>{user?.username}</span>
+                {user?.rating != null && (
+                  <span className={styles.ratingPill}>{user.rating}</span>
+                )}
               </Link>
               <button className="btn btn-outline btn-sm" onClick={handleLogout}>Выйти</button>
             </>
           ) : (
             <>
               <Link to="/login" className="btn btn-ghost btn-sm">Войти</Link>
-              <Link to="/register" className="btn btn-primary btn-sm">Начать бесплатно</Link>
+              <Link to="/register" className="btn btn-primary btn-sm">Начать →</Link>
             </>
           )}
         </div>

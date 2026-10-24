@@ -22,8 +22,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,8 +41,24 @@ public class ProblemService {
 
     @Transactional(readOnly = true)
     public Page<ProblemShortDto> getProblems(Difficulty difficulty, Long tagId, Long userId, Pageable pageable) {
-        return problemRepository.findByFilters(difficulty, tagId, pageable)
-                .map(p -> toShortDto(p, userId));
+        Page<Problem> page = problemRepository.findByFilters(difficulty, tagId, pageable);
+        List<Long> ids = page.getContent().stream().map(Problem::getId).toList();
+
+        if (ids.isEmpty()) return page.map(p -> toShortDto(p, 0L, false));
+
+        // Batch fetch solved-by-user counts (one query for all problems)
+        Map<Long, Long> solvedCounts = new HashMap<>();
+        submissionRepository.countDistinctUsersByProblemIdsAndVerdict(ids, Verdict.AC)
+                .forEach(row -> solvedCounts.put((Long) row[0], (Long) row[1]));
+
+        // Batch fetch which problems the current user has solved
+        Set<Long> userSolved = userId != null
+                ? new HashSet<>(submissionRepository.findSolvedProblemIdsByUserIdAndProblemIds(userId, ids))
+                : Set.of();
+
+        return page.map(p -> toShortDto(p,
+                solvedCounts.getOrDefault(p.getId(), 0L),
+                userSolved.contains(p.getId())));
     }
 
     @Transactional(readOnly = true)
@@ -141,16 +159,12 @@ public class ProblemService {
                 .collect(Collectors.toSet());
     }
 
-    private ProblemShortDto toShortDto(Problem p, Long userId) {
-        long solved = submissionRepository.countDistinctUsersByProblemIdAndVerdict(p.getId(), Verdict.AC);
-        Verdict userVerdict = null;
-        if (userId != null && submissionRepository.existsByUserIdAndProblemIdAndVerdict(userId, p.getId(), Verdict.AC)) {
-            userVerdict = Verdict.AC;
-        }
+    private ProblemShortDto toShortDto(Problem p, long solvedCount, boolean userSolved) {
+        Verdict userVerdict = userSolved ? Verdict.AC : null;
         Set<TagDto> tags = p.getTags().stream()
                 .map(t -> new TagDto(t.getId(), t.getName()))
                 .collect(Collectors.toSet());
-        return new ProblemShortDto(p.getId(), p.getTitle(), p.getDifficulty(), tags, solved, userVerdict);
+        return new ProblemShortDto(p.getId(), p.getTitle(), p.getDifficulty(), tags, solvedCount, userVerdict);
     }
 
     private ProblemDetailDto toDetailDto(Problem p, List<TestCaseDto> publicTests) {

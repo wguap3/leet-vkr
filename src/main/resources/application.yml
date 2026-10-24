@@ -3,9 +3,9 @@ spring:
     name: stackr-api
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/main_db}
-    username: ${SPRING_DATASOURCE_USERNAME:main_user}
-    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/stackr_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:secret}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -27,12 +27,17 @@ server:
     include-message: always
 
 jwt:
-  # Generate with: openssl rand -base64 32
-  secret: dGhpcyBpcyBhIHZlcnkgc2VjcmV0IGtleSBmb3Igc3RhY2ty
-  access-token-ttl: 86400  # 24 hours in seconds
+  # Change this secret in production: openssl rand -base64 64
+  secret: ${JWT_SECRET:dGhpcyBpcyBhIHZlcnkgc2VjcmV0IGtleSBmb3Igc3RhY2ty}
+  access-token-ttl: 86400  # 24h
 
 runner:
-  url: http://localhost:8081
+  url: ${RUNNER_URL:http://localhost:8081}
+
+app:
+  cors:
+    # Comma-separated list of allowed frontend origins
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
 
 logging:
   level:

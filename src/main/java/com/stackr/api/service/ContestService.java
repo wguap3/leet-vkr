@@ -7,6 +7,7 @@ import com.stackr.api.entity.Contest;
 import com.stackr.api.entity.ContestParticipation;
 import com.stackr.api.entity.Problem;
 import com.stackr.api.entity.enums.ContestStatus;
+import com.stackr.api.entity.enums.Role;
 import com.stackr.api.entity.enums.Verdict;
 import com.stackr.api.exception.BusinessException;
 import com.stackr.api.exception.ConflictException;
@@ -65,6 +66,16 @@ public class ContestService {
     @Transactional
     public ContestDetailDto updateContest(Long id, UpdateContestRequest req, Long userId) {
         var contest = findOrThrow(id);
+
+        // Ownership check: only the organizer or an admin can update this contest
+        if (!contest.getOrganizer().getId().equals(userId)) {
+            var caller = userRepository.findById(userId)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found"));
+            if (caller.getRole() != Role.ADMIN) {
+                throw new BusinessException("You are not authorized to update this contest");
+            }
+        }
+
         if (req.title() != null) contest.setTitle(req.title());
         if (req.description() != null) contest.setDescription(req.description());
         if (req.startTime() != null) contest.setStartTime(req.startTime());
