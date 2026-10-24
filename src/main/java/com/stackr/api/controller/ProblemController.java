@@ -29,9 +29,10 @@ public class ProblemController {
     public ResponseEntity<Page<ProblemShortDto>> getAll(
             @RequestParam(required = false) Difficulty difficulty,
             @RequestParam(required = false) Long tagId,
+            @RequestParam(required = false) String search,
             @AuthenticationPrincipal UserPrincipal principal,
             Pageable pageable) {
-        return ResponseEntity.ok(problemService.getProblems(difficulty, tagId, principal.getId(), pageable));
+        return ResponseEntity.ok(problemService.getProblems(difficulty, tagId, search, principal.getId(), pageable));
     }
 
     @GetMapping("/{id}")

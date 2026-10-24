@@ -42,8 +42,10 @@ public class ProblemService {
     private final SubmissionRepository submissionRepository;
 
     @Transactional(readOnly = true)
-    public Page<ProblemShortDto> getProblems(Difficulty difficulty, Long tagId, Long userId, Pageable pageable) {
-        Page<Problem> page = problemRepository.findByFilters(difficulty, tagId, pageable);
+    public Page<ProblemShortDto> getProblems(Difficulty difficulty, Long tagId, String search, Long userId, Pageable pageable) {
+        // Normalize search: blank string → null (no filter)
+        String normalizedSearch = (search != null && !search.isBlank()) ? search.strip() : null;
+        Page<Problem> page = problemRepository.findByFilters(difficulty, tagId, normalizedSearch, pageable);
         List<Long> ids = page.getContent().stream().map(Problem::getId).toList();
 
         if (ids.isEmpty()) return page.map(p -> toShortDto(p, 0L, false));

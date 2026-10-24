@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import * as problemsApi from '../api/problems'
 import type { ProblemShort, Difficulty } from '../types'
@@ -33,22 +33,37 @@ export default function ProblemsPage() {
   const [difficulty, setDifficulty] = useState<Difficulty | ''>('')
   const [page, setPage] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
+  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     setLoading(true)
-    problemsApi.getProblems({ difficulty: difficulty || undefined, page, size: 20 })
+    problemsApi.getProblems({ difficulty: difficulty || undefined, search: search || undefined, page, size: 20 })
       .then(({ data }) => {
         setProblems(data.content)
         setTotalPages(data.totalPages)
       })
       .finally(() => setLoading(false))
-  }, [difficulty, page])
+  }, [difficulty, search, page])
 
   return (
     <div className="page-container">
-      <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <h1>Задачи</h1>
         <div className={styles.filters}>
+          <input
+            type="text"
+            placeholder="Поиск по названию..."
+            value={searchInput}
+            onChange={e => {
+              const v = e.target.value
+              setSearchInput(v)
+              if (debounceRef.current) clearTimeout(debounceRef.current)
+              debounceRef.current = setTimeout(() => { setSearch(v); setPage(0) }, 350)
+            }}
+            style={{ minWidth: 220 }}
+          />
           <select value={difficulty} onChange={e => { setDifficulty(e.target.value as any); setPage(0) }}>
             <option value="">Все уровни</option>
             {DIFFICULTIES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}

@@ -62,13 +62,13 @@ class ProblemServiceTest {
     @DisplayName("getProblems: возвращает страницу ProblemShortDto")
     void getProblems_returnsPage() {
         var page = new PageImpl<>(List.of(problem));
-        given(problemRepository.findByFilters(null, null, PageRequest.of(0, 10))).willReturn(page);
+        given(problemRepository.findByFilters(null, null, null, PageRequest.of(0, 10))).willReturn(page);
         given(submissionRepository.countDistinctUsersByProblemIdsAndVerdict(anyList(), eq(Verdict.AC)))
                 .willReturn(List.of(new Object[]{10L, 5L}));
         given(submissionRepository.findSolvedProblemIdsByUserIdAndProblemIds(eq(1L), anyList()))
                 .willReturn(List.of(10L));
 
-        var result = problemService.getProblems(null, null, 1L, PageRequest.of(0, 10));
+        var result = problemService.getProblems(null, null, null, 1L, PageRequest.of(0, 10));
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         ProblemShortDto dto = result.getContent().get(0);

@@ -16,10 +16,12 @@ public interface ProblemRepository extends JpaRepository<Problem, Long> {
 
     @Query("SELECT p FROM Problem p WHERE p.visible = true " +
            "AND (:difficulty IS NULL OR p.difficulty = :difficulty) " +
-           "AND (:tagId IS NULL OR EXISTS (SELECT t FROM p.tags t WHERE t.id = :tagId))")
+           "AND (:tagId IS NULL OR EXISTS (SELECT t FROM p.tags t WHERE t.id = :tagId)) " +
+           "AND (:search IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Problem> findByFilters(
             @Param("difficulty") Difficulty difficulty,
             @Param("tagId") Long tagId,
+            @Param("search") String search,
             Pageable pageable);
 
     @Query("SELECT COUNT(s) FROM Submission s WHERE s.problem.id = :problemId AND s.verdict = 'AC'")

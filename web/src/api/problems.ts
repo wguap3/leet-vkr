@@ -2,7 +2,7 @@ import api from './client'
 import type { Hint, Page, ProblemDetail, ProblemShort, ProblemStats, RunCodeResult, TestCase } from '../types'
 
 export const getProblems = (params?: {
-  difficulty?: string; tagId?: number; page?: number; size?: number
+  difficulty?: string; tagId?: number; search?: string; page?: number; size?: number
 }) => api.get<Page<ProblemShort>>('/problems', { params })
 
 export const getProblem = (id: number) =>
