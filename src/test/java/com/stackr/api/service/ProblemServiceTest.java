@@ -28,6 +28,8 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,8 +63,10 @@ class ProblemServiceTest {
     void getProblems_returnsPage() {
         var page = new PageImpl<>(List.of(problem));
         given(problemRepository.findByFilters(null, null, PageRequest.of(0, 10))).willReturn(page);
-        given(submissionRepository.countDistinctUsersByProblemIdAndVerdict(10L, Verdict.AC)).willReturn(5L);
-        given(submissionRepository.existsByUserIdAndProblemIdAndVerdict(1L, 10L, Verdict.AC)).willReturn(true);
+        given(submissionRepository.countDistinctUsersByProblemIdsAndVerdict(anyList(), eq(Verdict.AC)))
+                .willReturn(List.of(new Object[]{10L, 5L}));
+        given(submissionRepository.findSolvedProblemIdsByUserIdAndProblemIds(eq(1L), anyList()))
+                .willReturn(List.of(10L));
 
         var result = problemService.getProblems(null, null, 1L, PageRequest.of(0, 10));
 

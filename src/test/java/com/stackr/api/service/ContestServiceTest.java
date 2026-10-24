@@ -1,6 +1,7 @@
 package com.stackr.api.service;
 
 import com.stackr.api.dto.request.CreateContestRequest;
+import com.stackr.api.dto.request.UpdateContestRequest;
 import com.stackr.api.dto.response.ContestDetailDto;
 import com.stackr.api.dto.response.LeaderboardEntryDto;
 import com.stackr.api.entity.Contest;
@@ -190,4 +191,50 @@ class ContestServiceTest {
         assertThatThrownBy(() -> contestService.deleteContest(99L))
                 .isInstanceOf(EntityNotFoundException.class);
     }
+
+    // ── updateContest — ownership check ───────────────────────────────────────
+
+    @Test
+    @DisplayName("updateContest: организатор обновляет свой контест → OK")
+    void updateContest_organizerOwnsContest_succeeds() {
+        var req = new UpdateContestRequest("New Title", null, null, null, null, null);
+        given(contestRepository.findById(5L)).willReturn(Optional.of(runningContest));
+        given(contestRepository.save(any())).willReturn(runningContest);
+        given(participationRepository.existsByUserIdAndContestId(1L, 5L)).willReturn(false);
+
+        ContestDetailDto dto = contestService.updateContest(5L, req, 1L);
+
+        assertThat(dto.id()).isEqualTo(5L);
+        then(contestRepository).should().save(any(Contest.class));
+    }
+
+    @Test
+    @DisplayName("updateContest: организатор пытается обновить чужой контест → BusinessException")
+    void updateContest_organizerNotOwner_throwsBusiness() {
+        var req = new UpdateContestRequest("Hack", null, null, null, null, null);
+        var otherUser = User.builder().id(3L).username("other").role(Role.CONTESTANT).active(true).build();
+        given(contestRepository.findById(5L)).willReturn(Optional.of(runningContest));
+        given(userRepository.findById(3L)).willReturn(Optional.of(otherUser));
+
+        assertThatThrownBy(() -> contestService.updateContest(5L, req, 3L))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("not authorized");
+    }
+
+    @Test
+    @DisplayName("updateContest: ADMIN может обновить чужой контест")
+    void updateContest_adminNotOwner_succeeds() {
+        var admin = User.builder().id(99L).username("admin").role(Role.ADMIN).active(true).build();
+        var req = new UpdateContestRequest("Admin Title", null, null, null, null, null);
+        given(contestRepository.findById(5L)).willReturn(Optional.of(runningContest));
+        given(userRepository.findById(99L)).willReturn(Optional.of(admin));
+        given(contestRepository.save(any())).willReturn(runningContest);
+        given(participationRepository.existsByUserIdAndContestId(99L, 5L)).willReturn(false);
+
+        ContestDetailDto dto = contestService.updateContest(5L, req, 99L);
+
+        assertThat(dto.id()).isEqualTo(5L);
+        then(contestRepository).should().save(any(Contest.class));
+    }
+
 }
