@@ -11,6 +11,7 @@ import ProfilePage from './pages/ProfilePage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import CreateProblemPage from './pages/CreateProblemPage'
 import CreateContestPage from './pages/CreateContestPage'
+import ContestAnalyticsPage from './pages/ContestAnalyticsPage'
 import { useAuthStore } from './store/authStore'
 import type { Role } from './types'
 
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/contests" element={<ProtectedRoute><ContestsPage /></ProtectedRoute>} />
         <Route path="/contests/new" element={<OrganizerRoute><CreateContestPage /></OrganizerRoute>} />
         <Route path="/contests/:id" element={<ProtectedRoute><ContestDetailPage /></ProtectedRoute>} />
+        <Route path="/contests/:id/analytics" element={<OrganizerRoute><ContestAnalyticsPage /></OrganizerRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
       </Routes>

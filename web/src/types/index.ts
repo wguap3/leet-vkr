@@ -21,6 +21,8 @@ export interface UserProfile extends User {
   avatarUrl?: string
   totalAC: number
   totalSubmissions: number
+  ratingTier?: string
+  ratingTierIcon?: string
 }
 
 export interface ProblemShort {
@@ -101,4 +103,53 @@ export interface Page<T> {
   totalPages: number
   size: number
   number: number
+}
+
+export interface Hint {
+  id: number
+  text: string | null   // null if locked
+  orderIndex: number
+  unlocksAfterAttempts: number
+  unlocked: boolean
+}
+
+export interface ProblemStats {
+  problemId: number
+  totalSubmissions: number
+  acCount: number
+  waCount: number
+  tleCount: number
+  reCount: number
+  ceCount: number
+  avgExecutionTimeMs: number | null
+  acceptanceRate: number
+}
+
+export interface TagProgress {
+  tagId: number
+  tagName: string
+  solved: number
+  total: number
+}
+
+export interface RunCodeResult {
+  stdout: string
+  stderr: string
+  elapsedMs: number
+  status: 'OK' | 'CE' | 'TLE' | 'RE'
+}
+
+export interface ContestAnalytics {
+  contestId: number
+  contestTitle: string
+  problems: Array<{ id: number; title: string }>
+  participants: Array<{
+    userId: number
+    username: string
+    results: Record<number, {
+      attempts: number
+      solved: boolean
+      firstAcMinutes: number | null
+    }>
+  }>
 }

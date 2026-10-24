@@ -4,6 +4,7 @@ import com.stackr.api.dto.request.CreateProblemRequest;
 import com.stackr.api.dto.request.UpdateProblemRequest;
 import com.stackr.api.dto.response.ProblemDetailDto;
 import com.stackr.api.dto.response.ProblemShortDto;
+import com.stackr.api.dto.response.ProblemStatsDto;
 import com.stackr.api.dto.response.TagDto;
 import com.stackr.api.dto.response.TestCaseDto;
 import com.stackr.api.entity.Problem;
@@ -103,6 +104,28 @@ public class ProblemService {
         var problem = findOrThrow(id);
         problem.setVisible(visible);
         problemRepository.save(problem);
+    }
+
+    @Transactional(readOnly = true)
+    public ProblemStatsDto getProblemStats(Long id) {
+        findOrThrow(id); // ensure exists
+        var rows = submissionRepository.countByProblemIdGroupByVerdict(id);
+        long ac = 0, wa = 0, tle = 0, re = 0, ce = 0;
+        for (Object[] row : rows) {
+            String verdict = row[0].toString();
+            long count = ((Number) row[1]).longValue();
+            switch (verdict) {
+                case "AC"  -> ac  = count;
+                case "WA"  -> wa  = count;
+                case "TLE" -> tle = count;
+                case "RE"  -> re  = count;
+                case "CE"  -> ce  = count;
+            }
+        }
+        long total = ac + wa + tle + re + ce;
+        Double avgMs = submissionRepository.avgExecutionTimeByProblemId(id);
+        double rate = total == 0 ? 0.0 : (ac * 100.0 / total);
+        return new ProblemStatsDto(id, total, ac, wa, tle, re, ce, avgMs, rate);
     }
 
     private Problem findOrThrow(Long id) {

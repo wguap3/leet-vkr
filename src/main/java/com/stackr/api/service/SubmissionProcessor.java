@@ -25,6 +25,8 @@ public class SubmissionProcessor {
     private final ContestParticipationRepository participationRepository;
     private final RunnerClient runnerClient;
 
+    public RunnerClient getRunnerClient() { return runnerClient; }
+
     @Async
     @Transactional
     public void processAsync(Long submissionId, Long problemId, int timeLimitMs, int memoryLimitMb) {

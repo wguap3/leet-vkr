@@ -1,6 +1,8 @@
 package com.stackr.api.service;
 
+import com.stackr.api.dto.request.RunCodeRequest;
 import com.stackr.api.dto.request.SubmitRequest;
+import com.stackr.api.dto.response.RunCodeResult;
 import com.stackr.api.dto.response.SubmissionDto;
 import com.stackr.api.entity.Submission;
 import com.stackr.api.entity.enums.ContestStatus;
@@ -74,6 +76,23 @@ public class SubmissionService {
     public Page<SubmissionDto> getMySubmissions(Long userId, Long problemId, Long contestId, Pageable pageable) {
         return submissionRepository.findByUserIdWithFilters(userId, problemId, contestId, pageable)
                 .map(s -> toDto(s, userId, false));
+    }
+
+    public RunCodeResult runCode(RunCodeRequest req) {
+        var problem = problemRepository.findById(req.problemId())
+                .orElseThrow(() -> new EntityNotFoundException("Problem not found: " + req.problemId()));
+        var result = submissionProcessor.getRunnerClient().runCustom(
+                req.sourceCode(),
+                req.customInput() != null ? req.customInput() : "",
+                problem.getTimeLimitMs(),
+                problem.getMemoryLimitMb()
+        );
+        return new RunCodeResult(
+                result.getStdout(),
+                result.getStderr(),
+                result.getElapsedMs(),
+                result.getStatus()
+        );
     }
 
     @Transactional(readOnly = true)

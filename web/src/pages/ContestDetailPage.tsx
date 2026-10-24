@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import * as contestsApi from '../api/contests'
+import { useAuthStore } from '../store/authStore'
 import type { ContestDetail, LeaderboardEntry } from '../types'
 import styles from './ContestDetailPage.module.css'
 
@@ -16,6 +17,8 @@ const DIFF_LABELS: Record<string, string> = {
 
 export default function ContestDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const { user } = useAuthStore()
+  const canOrganize = user?.role === 'ORGANIZER' || user?.role === 'ADMIN'
   const [contest, setContest] = useState<ContestDetail | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,6 +68,10 @@ export default function ContestDetailPage() {
             </span>
           </div>
         </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        {canOrganize && (
+          <Link to={`/contests/${id}/analytics`} className="btn btn-outline btn-sm">📊 Аналитика</Link>
+        )}
         {!contest.isRegistered && contest.status !== 'FINISHED' && (
           <button className="btn btn-primary" onClick={handleRegister} disabled={registering}>
             {registering ? <span className="spinner" /> : 'Зарегистрироваться'}
@@ -73,6 +80,7 @@ export default function ContestDetailPage() {
         {contest.isRegistered && (
           <span className="badge badge-ac" style={{ padding: '6px 12px' }}>✓ Зарегистрирован</span>
         )}
+        </div>
       </div>
 
       {contest.description && (

@@ -1,5 +1,5 @@
 import api from './client'
-import type { Page, ProblemDetail, ProblemShort, TestCase } from '../types'
+import type { Hint, Page, ProblemDetail, ProblemShort, ProblemStats, RunCodeResult, TestCase } from '../types'
 
 export const getProblems = (params?: {
   difficulty?: string; tagId?: number; page?: number; size?: number
@@ -10,6 +10,21 @@ export const getProblem = (id: number) =>
 
 export const submit = (problemId: number, sourceCode: string, contestId?: number) =>
   api.post('/submissions', { problemId, sourceCode, contestId })
+
+export const runCode = (problemId: number, sourceCode: string, customInput: string) =>
+  api.post<RunCodeResult>('/submissions/run', { problemId, sourceCode, customInput })
+
+export const getProblemStats = (id: number) =>
+  api.get<ProblemStats>(`/problems/${id}/stats`)
+
+export const getHints = (problemId: number) =>
+  api.get<Hint[]>(`/problems/${problemId}/hints`)
+
+export const createHint = (problemId: number, data: { text: string; orderIndex: number; unlocksAfterAttempts: number }) =>
+  api.post<Hint>(`/problems/${problemId}/hints`, data)
+
+export const deleteHint = (problemId: number, hintId: number) =>
+  api.delete(`/problems/${problemId}/hints/${hintId}`)
 
 export const createProblem = (data: {
   title: string

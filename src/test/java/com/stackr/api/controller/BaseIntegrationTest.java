@@ -77,7 +77,7 @@ public abstract class BaseIntegrationTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new RegisterRequest(username, email, password))))
+                                new RegisterRequest(username, email, password, null))))
                 .andExpect(status().isCreated());
 
         MvcResult loginResult = mockMvc.perform(post("/api/auth/login")

@@ -1,0 +1,39 @@
+.back { font-size: 12px; color: var(--text-4); text-decoration: none; display: block; margin-bottom: 6px; }
+.back:hover { color: var(--violet); }
+
+.summary { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.summaryChip { font-size: 12px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 4px 10px; border-radius: 99px; }
+
+.tableWrap { overflow-x: auto; }
+.analyticsTable { min-width: 600px; table-layout: auto; }
+.analyticsTable th, .analyticsTable td { white-space: nowrap; }
+
+.thRank  { width: 50px; text-align: center; }
+.thUser  { min-width: 140px; }
+.thSolved { width: 80px; text-align: center; }
+.thProblem { min-width: 130px; max-width: 200px; text-align: center; font-weight: 500; }
+.problemLink { color: var(--text-2); text-decoration: none; font-size: 12px; display: block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+.problemLink:hover { color: var(--violet); }
+
+.tdRank { text-align: center; font-weight: 700; font-size: 15px; }
+.tdSolved { text-align: center; }
+.solvedBadge { font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 99px; }
+
+.userCell { display: flex; align-items: center; gap: 8px; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--violet), #a78bfa); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+
+/* Result cells */
+.cellAc { background: var(--green-dim) !important; }
+.cellWa { background: rgba(239,68,68,.06) !important; }
+.cellEmpty { background: var(--bg-3) !important; text-align: center; color: var(--text-4); }
+.cellInner { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; }
+.cellIcon { font-size: 14px; font-weight: 700; }
+.cellAc .cellIcon { color: var(--green); }
+.cellWa .cellIcon { color: var(--red); }
+.cellSub { font-size: 10px; color: var(--text-4); }
+
+/* Legend */
+.legend { display: flex; align-items: center; gap: 16px; margin-top: 16px; font-size: 12px; color: var(--text-3); }
+.legendItem { display: flex; align-items: center; gap: 6px; }
+.cellAcDot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); display: inline-block; }
+.cellWaDot { width: 10px; height: 10px; border-radius: 50%; background: var(--red); display: inline-block; }

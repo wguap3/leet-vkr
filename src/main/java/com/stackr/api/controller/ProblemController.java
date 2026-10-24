@@ -4,6 +4,7 @@ import com.stackr.api.dto.request.CreateProblemRequest;
 import com.stackr.api.dto.request.UpdateProblemRequest;
 import com.stackr.api.dto.response.ProblemDetailDto;
 import com.stackr.api.dto.response.ProblemShortDto;
+import com.stackr.api.dto.response.ProblemStatsDto;
 import com.stackr.api.entity.enums.Difficulty;
 import com.stackr.api.security.UserPrincipal;
 import com.stackr.api.service.ProblemService;
@@ -60,6 +61,11 @@ public class ProblemController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         problemService.deleteProblem(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/stats")
+    public ResponseEntity<ProblemStatsDto> getStats(@PathVariable Long id) {
+        return ResponseEntity.ok(problemService.getProblemStats(id));
     }
 
     @PatchMapping("/{id}/visibility")

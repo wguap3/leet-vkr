@@ -13,7 +13,8 @@ export default function Navbar() {
     navigate('/')
   }
 
-  const isOrganizer = user?.role === 'ORGANIZER' || user?.role === 'ADMIN'
+  const isAdmin = user?.role === 'ADMIN'
+  const canCreateContest = user?.role === 'ORGANIZER' || user?.role === 'ADMIN'
   const auth = isAuthenticated()
 
   return (
@@ -28,10 +29,8 @@ export default function Navbar() {
             <NavLink to="/problems" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Задачи</NavLink>
             <NavLink to="/contests" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Контесты</NavLink>
             <NavLink to="/leaderboard" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Рейтинг</NavLink>
-            {isOrganizer && <>
-              <Link to="/problems/new" className={styles.createLink}>+ Задача</Link>
-              <Link to="/contests/new" className={styles.createLink}>+ Контест</Link>
-            </>}
+            {isAdmin && <Link to="/problems/new" className={styles.createLink}>+ Задача</Link>}
+            {canCreateContest && <Link to="/contests/new" className={styles.createLink}>+ Контест</Link>}
           </>}
         </div>
 

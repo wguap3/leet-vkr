@@ -10,6 +10,11 @@ interface TestCaseInput {
   isPublic: boolean
 }
 
+interface HintInput {
+  text: string
+  unlocksAfterAttempts: number
+}
+
 const DIFFICULTIES: { value: Difficulty; label: string }[] = [
   { value: 'EASY', label: 'Лёгкая' },
   { value: 'MEDIUM', label: 'Средняя' },
@@ -35,6 +40,7 @@ export default function CreateProblemPage() {
     { inputData: '', expectedOutput: '', isPublic: true },
     { inputData: '', expectedOutput: '', isPublic: false },
   ])
+  const [hints, setHints] = useState<HintInput[]>([])
   const [publish, setPublish] = useState(true)
 
   useEffect(() => {
@@ -43,12 +49,17 @@ export default function CreateProblemPage() {
 
   const addTestCase = () =>
     setTestCases(prev => [...prev, { inputData: '', expectedOutput: '', isPublic: false }])
-
   const removeTestCase = (i: number) =>
     setTestCases(prev => prev.filter((_, idx) => idx !== i))
-
   const updateTestCase = (i: number, field: keyof TestCaseInput, value: string | boolean) =>
     setTestCases(prev => prev.map((tc, idx) => idx === i ? { ...tc, [field]: value } : tc))
+
+  const addHint = () =>
+    setHints(prev => [...prev, { text: '', unlocksAfterAttempts: prev.length + 1 }])
+  const removeHint = (i: number) =>
+    setHints(prev => prev.filter((_, idx) => idx !== i))
+  const updateHint = (i: number, field: keyof HintInput, value: string | number) =>
+    setHints(prev => prev.map((h, idx) => idx === i ? { ...h, [field]: value } : h))
 
   const toggleTag = (id: number) =>
     setSelectedTags(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id])
@@ -75,6 +86,14 @@ export default function CreateProblemPage() {
 
       for (let i = 0; i < validTc.length; i++) {
         await problemsApi.addTestCase(problem.id, { ...validTc[i], orderIndex: i })
+      }
+
+      // Save hints
+      for (let i = 0; i < hints.length; i++) {
+        const h = hints[i]
+        if (h.text.trim()) {
+          await problemsApi.createHint(problem.id, { text: h.text.trim(), orderIndex: i, unlocksAfterAttempts: h.unlocksAfterAttempts })
+        }
       }
 
       if (publish) {
@@ -216,6 +235,51 @@ export default function CreateProblemPage() {
                     {testCases.length > 1 && (
                       <button type="button" className={styles.removeBtn} onClick={() => removeTestCase(i)}>✕</button>
                     )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Подсказки */}
+        <div className="card">
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h3 className={styles.sectionTitle}>Подсказки <span className={styles.hint}>(необязательно)</span></h3>
+              <button type="button" className="btn btn-outline btn-sm" onClick={addHint}>+ Добавить</button>
+            </div>
+            {hints.length === 0 && (
+              <p style={{ fontSize: 13, color: 'var(--text-4)', margin: '8px 0 0' }}>
+                Подсказки открываются участникам после N неверных попыток.
+              </p>
+            )}
+            <div className={styles.tcList}>
+              {hints.map((h, i) => (
+                <div key={i} className={styles.tcRow}>
+                  <div className={styles.tcIndex}>#{i + 1}</div>
+                  <div className={styles.field} style={{ flex: 1 }}>
+                    <label>Текст подсказки</label>
+                    <textarea
+                      rows={2}
+                      className={styles.tcArea}
+                      value={h.text}
+                      onChange={e => updateHint(i, 'text', e.target.value)}
+                      placeholder="Подумай о..."
+                    />
+                  </div>
+                  <div className={styles.field} style={{ width: 160 }}>
+                    <label>После N попыток</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={h.unlocksAfterAttempts}
+                      onChange={e => updateHint(i, 'unlocksAfterAttempts', +e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.tcControls}>
+                    <button type="button" className={styles.removeBtn} onClick={() => removeHint(i)}>✕</button>
                   </div>
                 </div>
               ))}

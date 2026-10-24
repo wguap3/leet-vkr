@@ -48,6 +48,45 @@ public class RunnerClient {
         }
     }
 
+    public CustomRunResult runCustom(String sourceCode, String input, int timeLimitMs, int memoryLimitMb) {
+        var request = Map.of(
+                "sourceCode", sourceCode,
+                "input", input == null ? "" : input,
+                "timeLimitMs", timeLimitMs,
+                "memoryLimitMb", memoryLimitMb
+        );
+        try {
+            ResponseEntity<CustomRunResult> resp = restTemplate.postForEntity(
+                    runnerUrl + "/api/run-custom", request, CustomRunResult.class);
+            return resp.getBody();
+        } catch (Exception e) {
+            log.error("Custom runner call failed: {}", e.getMessage());
+            CustomRunResult err = new CustomRunResult();
+            err.setStatus("RE");
+            err.setStderr("Runner unavailable: " + e.getMessage());
+            return err;
+        }
+    }
+
+    public static class CustomRunResult {
+        private String stdout;
+        private String stderr;
+        private int exitCode;
+        private int elapsedMs;
+        private String status;
+
+        public String getStdout()  { return stdout; }
+        public void setStdout(String v)  { stdout = v; }
+        public String getStderr()  { return stderr; }
+        public void setStderr(String v)  { stderr = v; }
+        public int getExitCode()   { return exitCode; }
+        public void setExitCode(int v)   { exitCode = v; }
+        public int getElapsedMs()  { return elapsedMs; }
+        public void setElapsedMs(int v)  { elapsedMs = v; }
+        public String getStatus()  { return status; }
+        public void setStatus(String v)  { status = v; }
+    }
+
     public static class RunnerResponse {
         private Long submissionId;
         private String verdict;

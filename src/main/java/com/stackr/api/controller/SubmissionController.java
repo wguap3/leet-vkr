@@ -1,6 +1,8 @@
 package com.stackr.api.controller;
 
+import com.stackr.api.dto.request.RunCodeRequest;
 import com.stackr.api.dto.request.SubmitRequest;
+import com.stackr.api.dto.response.RunCodeResult;
 import com.stackr.api.dto.response.SubmissionDto;
 import com.stackr.api.security.UserPrincipal;
 import com.stackr.api.service.SubmissionService;
@@ -37,6 +39,14 @@ public class SubmissionController {
         boolean isOrganizer = principal.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ORGANIZER") || a.getAuthority().equals("ROLE_ADMIN"));
         return ResponseEntity.ok(submissionService.getSubmission(id, principal.getId(), isOrganizer));
+    }
+
+    @PostMapping("/run")
+    @PreAuthorize("hasRole('CONTESTANT') or hasRole('ORGANIZER') or hasRole('ADMIN')")
+    public ResponseEntity<RunCodeResult> runCode(
+            @Valid @RequestBody RunCodeRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(submissionService.runCode(req));
     }
 
     @GetMapping("/my")

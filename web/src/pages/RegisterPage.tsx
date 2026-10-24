@@ -6,6 +6,7 @@ import styles from './AuthPage.module.css'
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ username: '', email: '', password: '' })
+  const [role, setRole] = useState<'CONTESTANT' | 'ORGANIZER'>('CONTESTANT')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { setTokens, setUser } = useAuthStore()
@@ -19,7 +20,7 @@ export default function RegisterPage() {
     setError('')
     setLoading(true)
     try {
-      await authApi.register(form.username, form.email, form.password)
+      await authApi.register(form.username, form.email, form.password, role)
       const { data: tokens } = await authApi.login(form.username, form.password)
       setTokens(tokens.accessToken, tokens.refreshToken)
       const { data: user } = await authApi.getMe()
@@ -47,6 +48,29 @@ export default function RegisterPage() {
         <h1 className={styles.title}>Регистрация</h1>
         <p className={styles.subtitle}>Создай аккаунт и начни решать задачи</p>
         {error && <div className={styles.error}>{error}</div>}
+
+        {/* Role toggle */}
+        <div className={styles.roleToggle}>
+          <button
+            type="button"
+            className={`${styles.roleBtn} ${role === 'CONTESTANT' ? styles.roleActive : ''}`}
+            onClick={() => setRole('CONTESTANT')}
+          >
+            <span className={styles.roleIcon}>🏆</span>
+            <span className={styles.roleLabel}>Участник</span>
+            <span className={styles.roleDesc}>Решаю задачи и контесты</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.roleBtn} ${role === 'ORGANIZER' ? styles.roleActive : ''}`}
+            onClick={() => setRole('ORGANIZER')}
+          >
+            <span className={styles.roleIcon}>🎯</span>
+            <span className={styles.roleLabel}>Организатор</span>
+            <span className={styles.roleDesc}>Создаю контесты</span>
+          </button>
+        </div>
+
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
             <label>Имя пользователя</label>

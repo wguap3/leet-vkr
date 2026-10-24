@@ -16,9 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -120,6 +118,62 @@ public class ContestService {
             ));
         }
         return result;
+    }
+
+    @Transactional(readOnly = true)
+    public ContestAnalyticsDto getAnalytics(Long contestId) {
+        var contest = findOrThrow(contestId);
+        var submissions = submissionRepository.findAllByContestId(contestId);
+
+        // Build problem headers
+        List<ContestAnalyticsDto.ProblemHeader> problems = contest.getProblems().stream()
+                .map(p -> new ContestAnalyticsDto.ProblemHeader(p.getId(), p.getTitle()))
+                .toList();
+
+        // Group submissions by user, then by problem
+        Map<Long, String> userNames = new HashMap<>();
+        // userId → (problemId → list of submissions)
+        Map<Long, Map<Long, List<com.stackr.api.entity.Submission>>> grouped = new HashMap<>();
+
+        for (var s : submissions) {
+            Long uid = s.getUser().getId();
+            Long pid = s.getProblem().getId();
+            userNames.put(uid, s.getUser().getUsername());
+            grouped.computeIfAbsent(uid, k -> new HashMap<>())
+                   .computeIfAbsent(pid, k -> new ArrayList<>())
+                   .add(s);
+        }
+
+        List<ContestAnalyticsDto.ParticipantRow> rows = new ArrayList<>();
+        for (var entry : grouped.entrySet()) {
+            Long uid = entry.getKey();
+            Map<Long, ContestAnalyticsDto.ProblemResult> results = new HashMap<>();
+            for (var pe : entry.getValue().entrySet()) {
+                Long pid = pe.getKey();
+                var subs = pe.getValue();
+                int attempts = subs.size();
+                boolean solved = subs.stream().anyMatch(s -> s.getVerdict() == com.stackr.api.entity.enums.Verdict.AC);
+                Integer firstAcMin = null;
+                if (solved) {
+                    var firstAc = subs.stream()
+                            .filter(s -> s.getVerdict() == com.stackr.api.entity.enums.Verdict.AC)
+                            .min(Comparator.comparing(com.stackr.api.entity.Submission::getSubmittedAt))
+                            .orElse(null);
+                    if (firstAc != null && contest.getStartTime() != null) {
+                        firstAcMin = (int) java.time.Duration.between(contest.getStartTime(), firstAc.getSubmittedAt()).toMinutes();
+                    }
+                }
+                results.put(pid, new ContestAnalyticsDto.ProblemResult(attempts, solved, firstAcMin));
+            }
+            rows.add(new ContestAnalyticsDto.ParticipantRow(uid, userNames.get(uid), results));
+        }
+
+        // Sort by solved desc, then username
+        rows.sort(Comparator.<ContestAnalyticsDto.ParticipantRow>comparingInt(r -> -r.results().values().stream()
+                        .mapToInt(pr -> pr.solved() ? 1 : 0).sum())
+                .thenComparing(r -> r.username()));
+
+        return new ContestAnalyticsDto(contestId, contest.getTitle(), problems, rows);
     }
 
     private Contest findOrThrow(Long id) {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client'
 import type { Page, UserProfile } from '../types'
+import RatingBadge from '../components/RatingBadge'
 import styles from './LeaderboardPage.module.css'
 
 const MEDALS = ['🥇', '🥈', '🥉']
@@ -28,7 +29,14 @@ export default function LeaderboardPage() {
         ) : (
           <table className="table">
             <thead>
-              <tr><th style={{ width: 60 }}>#</th><th>Участник</th><th>Рейтинг</th><th>Решено</th><th>Посылок</th></tr>
+              <tr>
+                <th style={{ width: 60 }}>#</th>
+                <th>Участник</th>
+                <th>Тир</th>
+                <th style={{ textAlign: 'right' }}>Рейтинг</th>
+                <th>Решено</th>
+                <th>Посылок</th>
+              </tr>
             </thead>
             <tbody>
               {users.map((u, i) => {
@@ -48,7 +56,8 @@ export default function LeaderboardPage() {
                         <span style={{ fontWeight: 500 }}>{u.username}</span>
                       </div>
                     </td>
-                    <td className={styles.rating}>{u.rating}</td>
+                    <td><RatingBadge rating={u.rating} size="sm" showRating={false} /></td>
+                    <td style={{ textAlign: 'right', color: 'var(--violet)', fontWeight: 700 }}>{u.rating}</td>
                     <td style={{ color: 'var(--text-2)' }}>{u.totalAC}</td>
                     <td style={{ color: 'var(--text-3)' }}>{u.totalSubmissions}</td>
                   </tr>

@@ -17,3 +17,10 @@
 .statCard { padding: 22px 24px; border-radius: var(--radius-lg); background: var(--bg-3); border: 1px solid var(--border); text-align: center; }
 .statValue { font-size: 30px; font-weight: 800; letter-spacing: -.04em; background: linear-gradient(135deg, #a78bfa, var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .statLabel { font-size: 12px; color: var(--text-3); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+
+/* Topic progress */
+.progressGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.progressItem { display: flex; flex-direction: column; gap: 6px; }
+.progressLabel { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; }
+.progressTrack { height: 6px; background: var(--bg-4); border-radius: 99px; overflow: hidden; }
+.progressFill { height: 100%; border-radius: 99px; transition: width .5s ease; }

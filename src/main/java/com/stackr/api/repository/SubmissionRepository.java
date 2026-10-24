@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -40,4 +41,42 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     @Query("SELECT COUNT(DISTINCT s.problem.id) FROM Submission s WHERE s.user.id = :userId AND s.verdict = :verdict")
     long countDistinctSolvedByUserId(@Param("userId") Long userId, @Param("verdict") Verdict verdict);
+
+    /** Count wrong (non-AC) submissions by user on a specific problem */
+    @Query("SELECT COUNT(s) FROM Submission s WHERE s.user.id = :userId AND s.problem.id = :problemId AND s.verdict <> 'AC'")
+    long countWrongByUserIdAndProblemId(@Param("userId") Long userId, @Param("problemId") Long problemId);
+
+    /** Verdict distribution for a problem: returns list of [verdict, count] */
+    @Query("SELECT s.verdict, COUNT(s) FROM Submission s WHERE s.problem.id = :problemId GROUP BY s.verdict")
+    List<Object[]> countByProblemIdGroupByVerdict(@Param("problemId") Long problemId);
+
+    /** Average execution time for AC submissions on a problem */
+    @Query("SELECT AVG(s.executionTimeMs) FROM Submission s WHERE s.problem.id = :problemId AND s.verdict = 'AC' AND s.executionTimeMs IS NOT NULL")
+    Double avgExecutionTimeByProblemId(@Param("problemId") Long problemId);
+
+    /** All submissions for a contest */
+    @Query("SELECT s FROM Submission s WHERE s.contest.id = :contestId ORDER BY s.submittedAt ASC")
+    List<Submission> findAllByContestId(@Param("contestId") Long contestId);
+
+    /** Per-tag solved count for a user:
+     *  returns list of [tagId, tagName, solvedCount] */
+    @Query("""
+        SELECT t.id, t.name, COUNT(DISTINCT s.problem.id)
+        FROM Submission s
+        JOIN s.problem p
+        JOIN p.tags t
+        WHERE s.user.id = :userId AND s.verdict = 'AC'
+        GROUP BY t.id, t.name
+        """)
+    List<Object[]> countSolvedPerTagByUserId(@Param("userId") Long userId);
+
+    /** Total problems per tag */
+    @Query("""
+        SELECT t.id, t.name, COUNT(DISTINCT p.id)
+        FROM Problem p
+        JOIN p.tags t
+        WHERE p.visible = true
+        GROUP BY t.id, t.name
+        """)
+    List<Object[]> countProblemsPerTag();
 }

@@ -79,6 +79,12 @@ public class ContestController {
         return ResponseEntity.ok(contestService.getLeaderboard(id));
     }
 
+    @GetMapping("/{id}/analytics")
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    public ResponseEntity<ContestAnalyticsDto> getAnalytics(@PathVariable Long id) {
+        return ResponseEntity.ok(contestService.getAnalytics(id));
+    }
+
     @GetMapping("/{id}/submissions")
     @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
     public ResponseEntity<Page<SubmissionDto>> getSubmissions(

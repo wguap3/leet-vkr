@@ -1,6 +1,7 @@
 package com.stackr.api.controller;
 
 import com.stackr.api.dto.request.UpdateProfileRequest;
+import com.stackr.api.dto.response.TagProgressDto;
 import com.stackr.api.dto.response.UserDto;
 import com.stackr.api.dto.response.UserProfileDto;
 import com.stackr.api.entity.enums.Role;
@@ -24,6 +25,12 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserProfileDto> getMe(@AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(userService.getProfile(principal.getId()));
+    }
+
+    @GetMapping("/me/progress")
+    public ResponseEntity<java.util.List<TagProgressDto>> getMyProgress(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(userService.getTopicProgress(principal.getId()));
     }
 
     @PutMapping("/me")

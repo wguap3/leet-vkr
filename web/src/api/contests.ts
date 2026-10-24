@@ -1,5 +1,5 @@
 import api from './client'
-import type { ContestDetail, ContestShort, LeaderboardEntry } from '../types'
+import type { ContestAnalytics, ContestDetail, ContestShort, LeaderboardEntry } from '../types'
 
 export const getContests = (status?: string) =>
   api.get<ContestShort[]>('/contests', { params: { status } })
@@ -12,6 +12,9 @@ export const registerForContest = (id: number) =>
 
 export const getLeaderboard = (id: number) =>
   api.get<LeaderboardEntry[]>(`/contests/${id}/leaderboard`)
+
+export const getContestAnalytics = (id: number) =>
+  api.get<ContestAnalytics>(`/contests/${id}/analytics`)
 
 export const createContest = (data: {
   title: string

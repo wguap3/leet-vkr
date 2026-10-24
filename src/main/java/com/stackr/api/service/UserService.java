@@ -1,6 +1,7 @@
 package com.stackr.api.service;
 
 import com.stackr.api.dto.request.UpdateProfileRequest;
+import com.stackr.api.dto.response.TagProgressDto;
 import com.stackr.api.dto.response.UserDto;
 import com.stackr.api.dto.response.UserProfileDto;
 import com.stackr.api.entity.enums.Role;
@@ -26,8 +27,10 @@ public class UserService {
         var user = findOrThrow(userId);
         long totalAC = submissionRepository.countDistinctSolvedByUserId(userId, Verdict.AC);
         long totalSubs = submissionRepository.countByUserId(userId);
+        int rating = user.getRating() == null ? 0 : user.getRating();
         return new UserProfileDto(user.getId(), user.getUsername(), user.getEmail(), user.getRole(),
-                user.getRating(), user.getAvatarUrl(), user.getRegisteredAt(), totalAC, totalSubs);
+                rating, UserProfileDto.tierName(rating), UserProfileDto.tierIcon(rating),
+                user.getAvatarUrl(), user.getRegisteredAt(), totalAC, totalSubs);
     }
 
     @Transactional
@@ -44,15 +47,52 @@ public class UserService {
                 new UserDto(u.getId(), u.getUsername(), u.getEmail(), u.getRole(), u.getRating(), u.getRegisteredAt()));
     }
 
+    private UserProfileDto toProfileDto(com.stackr.api.entity.User u, long totalAC, long totalSubs) {
+        int rating = u.getRating() == null ? 0 : u.getRating();
+        return new UserProfileDto(u.getId(), u.getUsername(), u.getEmail(), u.getRole(),
+                rating, UserProfileDto.tierName(rating), UserProfileDto.tierIcon(rating),
+                u.getAvatarUrl(), u.getRegisteredAt(), totalAC, totalSubs);
+    }
+
     @Transactional(readOnly = true)
     public Page<UserProfileDto> getLeaderboard(Pageable pageable) {
         return userRepository.findAllByOrderByRatingDesc(pageable)
                 .map(u -> {
                     long totalAC = submissionRepository.countDistinctSolvedByUserId(u.getId(), Verdict.AC);
                     long totalSubs = submissionRepository.countByUserId(u.getId());
-                    return new UserProfileDto(u.getId(), u.getUsername(), u.getEmail(), u.getRole(),
-                            u.getRating(), u.getAvatarUrl(), u.getRegisteredAt(), totalAC, totalSubs);
+                    return toProfileDto(u, totalAC, totalSubs);
                 });
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<TagProgressDto> getTopicProgress(Long userId) {
+        var solvedRows = submissionRepository.countSolvedPerTagByUserId(userId);
+        var totalRows  = submissionRepository.countProblemsPerTag();
+
+        // Build map tagId → total
+        java.util.Map<Long, Long> totalMap = new java.util.HashMap<>();
+        java.util.Map<Long, String> nameMap = new java.util.HashMap<>();
+        for (Object[] row : totalRows) {
+            Long tagId = ((Number) row[0]).longValue();
+            totalMap.put(tagId, ((Number) row[2]).longValue());
+            nameMap.put(tagId, (String) row[1]);
+        }
+
+        // Merge with solved
+        java.util.Map<Long, Long> solvedMap = new java.util.HashMap<>();
+        for (Object[] row : solvedRows) {
+            Long tagId = ((Number) row[0]).longValue();
+            solvedMap.put(tagId, ((Number) row[2]).longValue());
+            nameMap.putIfAbsent(tagId, (String) row[1]);
+        }
+
+        return nameMap.entrySet().stream()
+                .map(e -> new TagProgressDto(
+                        e.getKey(), e.getValue(),
+                        solvedMap.getOrDefault(e.getKey(), 0L),
+                        totalMap.getOrDefault(e.getKey(), 0L)))
+                .sorted(java.util.Comparator.comparing(TagProgressDto::tagName))
+                .toList();
     }
 
     @Transactional

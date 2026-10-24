@@ -63,7 +63,7 @@ class AuthServiceTest {
         given(userRepository.save(any())).willReturn(alice);
 
         UserDto result = authService.register(
-                new RegisterRequest("alice", "alice@example.com", "password123"));
+                new RegisterRequest("alice", "alice@example.com", "password123", null));
 
         assertThat(result.id()).isEqualTo(1L);
         assertThat(result.username()).isEqualTo("alice");
@@ -77,7 +77,7 @@ class AuthServiceTest {
         given(userRepository.existsByUsername("alice")).willReturn(true);
 
         assertThatThrownBy(() -> authService.register(
-                new RegisterRequest("alice", "alice@example.com", "password123")))
+                new RegisterRequest("alice", "alice@example.com", "password123", null)))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("alice");
     }
@@ -89,7 +89,7 @@ class AuthServiceTest {
         given(userRepository.existsByEmail("alice@example.com")).willReturn(true);
 
         assertThatThrownBy(() -> authService.register(
-                new RegisterRequest("alice", "alice@example.com", "password123")))
+                new RegisterRequest("alice", "alice@example.com", "password123", null)))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("alice@example.com");
     }
