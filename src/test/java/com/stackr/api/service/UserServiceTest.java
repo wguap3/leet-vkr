@@ -25,6 +25,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
+import com.stackr.api.dto.request.ChangePasswordRequest;
+import com.stackr.api.exception.BusinessException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService — unit tests")
@@ -32,6 +35,7 @@ class UserServiceTest {
 
     @Mock UserRepository userRepository;
     @Mock SubmissionRepository submissionRepository;
+    @Mock PasswordEncoder passwordEncoder;
     @InjectMocks UserService userService;
 
     private User alice;
@@ -157,5 +161,36 @@ class UserServiceTest {
         assertThat(arrays.total()).isEqualTo(8L);
         assertThat(graphs.solved()).isEqualTo(0L); // not in solvedRows
         assertThat(graphs.total()).isEqualTo(6L);
+    }
+    // ── changePassword ────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("changePassword: верный старый пароль → пароль обновляется")
+    void changePassword_correctOldPassword_updatesHash() {
+        user.setPasswordHash("$2a$10$hashed");
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(passwordEncoder.matches("oldPass", "$2a$10$hashed")).willReturn(true);
+        given(passwordEncoder.encode("newPass123")).willReturn("$2a$10$newHash");
+        given(userRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
+
+        userService.changePassword(1L, new ChangePasswordRequest("oldPass", "newPass123"));
+
+        assertThat(user.getPasswordHash()).isEqualTo("$2a$10$newHash");
+        then(userRepository).should().save(user);
+    }
+
+    @Test
+    @DisplayName("changePassword: неверный старый пароль → BusinessException")
+    void changePassword_wrongOldPassword_throwsBusiness() {
+        user.setPasswordHash("$2a$10$hashed");
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(passwordEncoder.matches("wrongPass", "$2a$10$hashed")).willReturn(false);
+
+        assertThatThrownBy(() ->
+                userService.changePassword(1L, new ChangePasswordRequest("wrongPass", "newPass123")))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Неверный текущий пароль");
+
+        then(userRepository).should(never()).save(any());
     }
 }

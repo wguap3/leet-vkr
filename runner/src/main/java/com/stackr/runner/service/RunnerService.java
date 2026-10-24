@@ -7,6 +7,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+/**
+ * Judges a submission against all test cases.
+ *
+ * Optimised flow:
+ *   1. Compile the source code ONCE.
+ *   2. Iterate test cases, running the compiled binary for each.
+ *   3. Return on the first non-AC verdict (fail-fast).
+ *   4. Clean up the temp directory.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -23,20 +32,45 @@ public class RunnerService {
                     .build();
         }
 
-        // First, check compilation by doing a dry run with the first test case
+        // ── 1. Compile once ───────────────────────────────────────────────────
+        DockerService.CompileResult compile;
+        try {
+            compile = dockerService.compile(req.sourceCode());
+        } catch (Exception e) {
+            log.error("Compile exception for submission {}: {}", req.submissionId(), e.getMessage());
+            return RunResponse.builder()
+                    .submissionId(req.submissionId())
+                    .verdict("CE")
+                    .errorMessage("Internal compile error: " + e.getMessage())
+                    .build();
+        }
+
+        if (!compile.ok()) {
+            return RunResponse.builder()
+                    .submissionId(req.submissionId())
+                    .verdict("CE")
+                    .errorMessage(truncate(compile.errorMessage(), 2000))
+                    .build();
+        }
+
+        // ── 2. Run each test case (fail-fast) ─────────────────────────────────
+        int maxElapsedMs = 0;
         try {
             for (TestCaseInput tc : req.testCases()) {
-                var result = dockerService.runInDocker(
-                        req.sourceCode(), tc.input(), req.timeLimitMs(), req.memoryLimitMb());
-
-                // Exit code 2 = compilation error
-                if (result.exitCode() == 2) {
+                DockerService.ExecutionResult result;
+                try {
+                    result = dockerService.runTest(
+                            compile.classDir(), tc.input(), req.timeLimitMs(), req.memoryLimitMb());
+                } catch (Exception e) {
+                    log.error("runTest exception for submission {}: {}", req.submissionId(), e.getMessage());
                     return RunResponse.builder()
                             .submissionId(req.submissionId())
-                            .verdict("CE")
-                            .errorMessage(truncate(result.stderr(), 2000))
+                            .verdict("RE")
+                            .errorMessage("Internal runner error: " + e.getMessage())
                             .build();
                 }
+
+                maxElapsedMs = Math.max(maxElapsedMs, result.elapsedMs());
 
                 // TLE
                 if (result.exitCode() == 124 || result.elapsedMs() > req.timeLimitMs()) {
@@ -57,10 +91,8 @@ public class RunnerService {
                             .build();
                 }
 
-                // Wrong answer
-                String expected = tc.expectedOutput().trim();
-                String actual = result.stdout().trim();
-                if (!expected.equals(actual)) {
+                // Wrong answer (trim both sides for trailing newline tolerance)
+                if (!tc.expectedOutput().trim().equals(result.stdout().trim())) {
                     return RunResponse.builder()
                             .submissionId(req.submissionId())
                             .verdict("WA")
@@ -69,31 +101,24 @@ public class RunnerService {
                 }
             }
 
-            // All test cases passed
-            var lastResult = dockerService.runInDocker(
-                    req.sourceCode(),
-                    req.testCases().get(req.testCases().size() - 1).input(),
-                    req.timeLimitMs(), req.memoryLimitMb());
-
+            // ── 3. All tests passed ───────────────────────────────────────────
             return RunResponse.builder()
                     .submissionId(req.submissionId())
                     .verdict("AC")
-                    .executionTimeMs(lastResult.elapsedMs())
-                    .memoryUsedMb(req.memoryLimitMb() / 4) // estimate
+                    .executionTimeMs(maxElapsedMs)
+                    .memoryUsedMb(req.memoryLimitMb() / 4)   // rough estimate
                     .build();
 
-        } catch (Exception e) {
-            log.error("Runner error for submission {}", req.submissionId(), e);
-            return RunResponse.builder()
-                    .submissionId(req.submissionId())
-                    .verdict("RE")
-                    .errorMessage("Internal runner error: " + e.getMessage())
-                    .build();
+        } finally {
+            // ── 4. Always clean up the compiled classes ───────────────────────
+            dockerService.cleanup(compile.classDir());
         }
     }
 
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
     private String truncate(String s, int max) {
         if (s == null) return null;
-        return s.length() > max ? s.substring(0, max) + "..." : s;
+        return s.length() > max ? s.substring(0, max) + "…" : s;
     }
 }
