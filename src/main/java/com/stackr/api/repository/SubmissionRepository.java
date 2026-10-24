@@ -97,4 +97,18 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
         GROUP BY t.id, t.name
         """)
     List<Object[]> countProblemsPerTag();
+    /** Batch AC count per user — returns [userId, distinctProblemCount] */
+    @Query("SELECT s.user.id, COUNT(DISTINCT s.problem.id) FROM Submission s " +
+           "WHERE s.user.id IN :userIds AND s.verdict = :verdict " +
+           "GROUP BY s.user.id")
+    List<Object[]> countDistinctSolvedByUserIdsAndVerdict(
+            @Param("userIds") Collection<Long> userIds,
+            @Param("verdict") Verdict verdict);
+
+    /** Batch total submission count per user — returns [userId, count] */
+    @Query("SELECT s.user.id, COUNT(s) FROM Submission s " +
+           "WHERE s.user.id IN :userIds " +
+           "GROUP BY s.user.id")
+    List<Object[]> countSubmissionsByUserIds(@Param("userIds") Collection<Long> userIds);
+
 }

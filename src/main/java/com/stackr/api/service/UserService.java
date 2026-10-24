@@ -56,12 +56,25 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Page<UserProfileDto> getLeaderboard(Pageable pageable) {
-        return userRepository.findAllByOrderByRatingDesc(pageable)
-                .map(u -> {
-                    long totalAC = submissionRepository.countDistinctSolvedByUserId(u.getId(), Verdict.AC);
-                    long totalSubs = submissionRepository.countByUserId(u.getId());
-                    return toProfileDto(u, totalAC, totalSubs);
-                });
+        var page = userRepository.findAllByOrderByRatingDesc(pageable);
+        if (page.isEmpty()) return page.map(u -> toProfileDto(u, 0L, 0L));
+
+        java.util.List<Long> ids = page.getContent().stream()
+                .map(com.stackr.api.entity.User::getId).toList();
+
+        // Batch: solved AC count per user
+        java.util.Map<Long, Long> acMap = new java.util.HashMap<>();
+        submissionRepository.countDistinctSolvedByUserIdsAndVerdict(ids, Verdict.AC)
+                .forEach(row -> acMap.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue()));
+
+        // Batch: total submissions per user
+        java.util.Map<Long, Long> subMap = new java.util.HashMap<>();
+        submissionRepository.countSubmissionsByUserIds(ids)
+                .forEach(row -> subMap.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue()));
+
+        return page.map(u -> toProfileDto(u,
+                acMap.getOrDefault(u.getId(), 0L),
+                subMap.getOrDefault(u.getId(), 0L)));
     }
 
     @Transactional(readOnly = true)

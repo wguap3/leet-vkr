@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import api from '../api/client'
 import type { Page, UserProfile } from '../types'
@@ -53,7 +54,7 @@ export default function LeaderboardPage() {
                         <div className={styles.avatar}>
                           {u.avatarUrl ? <img src={u.avatarUrl} alt={u.username} /> : u.username[0].toUpperCase()}
                         </div>
-                        <span style={{ fontWeight: 500 }}>{u.username}</span>
+                        <Link to={`/profile/${u.id}`} style={{ fontWeight: 500, color: 'var(--text-1)', textDecoration: 'none' }} className="hover-link">{u.username}</Link>
                       </div>
                     </td>
                     <td><RatingBadge rating={u.rating} size="sm" showRating={false} /></td>

@@ -8,6 +8,7 @@ import ProblemDetailPage from './pages/ProblemDetailPage'
 import ContestsPage from './pages/ContestsPage'
 import ContestDetailPage from './pages/ContestDetailPage'
 import ProfilePage from './pages/ProfilePage'
+import PublicProfilePage from './pages/PublicProfilePage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import CreateProblemPage from './pages/CreateProblemPage'
 import CreateContestPage from './pages/CreateContestPage'
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/contests/:id" element={<ProtectedRoute><ContestDetailPage /></ProtectedRoute>} />
         <Route path="/contests/:id/analytics" element={<OrganizerRoute><ContestAnalyticsPage /></OrganizerRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/profile/:id" element={<ProtectedRoute><PublicProfilePage /></ProtectedRoute>} />
         <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
         <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
       </Routes>
