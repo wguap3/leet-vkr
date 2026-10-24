@@ -1,0 +1,51 @@
+.back { font-size: 12px; color: var(--text-4); text-decoration: none; display: block; margin-bottom: 6px; }
+.back:hover { color: var(--violet); }
+
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+.title { margin: 0; }
+.meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+.chip { font-size: 12px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 4px 10px; border-radius: 99px; }
+
+.tableWrap { overflow-x: auto; }
+.standingsTable { min-width: 640px; table-layout: auto; }
+.standingsTable th, .standingsTable td { white-space: nowrap; }
+
+.thRank   { width: 52px; text-align: center; }
+.thUser   { min-width: 140px; }
+.thSolved { width: 72px; text-align: center; }
+.thPenalty{ width: 80px; text-align: center; }
+.thProb   { min-width: 90px; text-align: center; font-weight: 500; }
+
+.tdRank   { text-align: center; font-weight: 700; font-size: 15px; }
+.tdSolved { text-align: center; font-weight: 700; }
+.tdPenalty{ text-align: center; color: var(--text-3); font-size: 13px; }
+
+.userCell { display: flex; align-items: center; gap: 8px; }
+.avatar   { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--violet), #a78bfa); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.usernameLink { color: var(--text-1); text-decoration: none; }
+.usernameLink:hover { color: var(--violet); }
+
+/* cells */
+.cellAc    { background: var(--green-dim) !important; text-align: center; }
+.cellWa    { background: rgba(239,68,68,.06) !important; text-align: center; }
+.cellEmpty { background: var(--bg-3) !important; text-align: center; color: var(--text-4); }
+
+.cellInner { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 0; }
+.cellCheck { font-size: 14px; font-weight: 700; }
+.cellAc .cellCheck { color: var(--green); }
+.cellWa .cellCheck { color: var(--red); }
+.cellSub  { font-size: 10px; color: var(--text-4); }
+.cellTime { font-size: 10px; font-weight: 600; color: var(--green); }
+
+/* rank colors */
+.gold   { color: #f59e0b; }
+.silver { color: #94a3b8; }
+.bronze { color: #b45309; }
+
+/* legend */
+.legend { display: flex; align-items: center; gap: 16px; margin-top: 16px; font-size: 12px; color: var(--text-3); flex-wrap: wrap; }
+.legendItem { display: flex; align-items: center; gap: 6px; }
+.dotGreen { width: 10px; height: 10px; border-radius: 50%; background: var(--green); }
+.dotRed   { width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
+
+.emptyState { padding: 48px 0; }

@@ -92,4 +92,10 @@ public class ContestController {
             Pageable pageable) {
         return ResponseEntity.ok(submissionService.getByProblem(id, pageable));
     }
+
+    @GetMapping("/{id}/standings")
+    public ResponseEntity<ContestStandingsDto> getStandings(@PathVariable Long id) {
+        return ResponseEntity.ok(contestService.getStandings(id));
+    }
+
 }

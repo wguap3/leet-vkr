@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -195,6 +198,110 @@ public class ContestService {
                 .thenComparing(r -> r.username()));
 
         return new ContestAnalyticsDto(contestId, contest.getTitle(), problems, rows);
+    }
+
+
+    @Transactional(readOnly = true)
+    public ContestStandingsDto getStandings(Long contestId) {
+        var contest = findOrThrow(contestId);
+        var submissions = submissionRepository.findAllByContestId(contestId);
+
+        // problem order  A, B, C ...
+        List<com.stackr.api.entity.Problem> problems = contest.getProblems();
+        List<ContestStandingsDto.ProblemHeader> headers = new ArrayList<>();
+        for (int i = 0; i < problems.size(); i++) {
+            var p = problems.get(i);
+            headers.add(new ContestStandingsDto.ProblemHeader(p.getId(), p.getTitle(),
+                    String.valueOf((char) ('A' + i))));
+        }
+        Set<Long> problemIds = problems.stream()
+                .map(com.stackr.api.entity.Problem::getId).collect(Collectors.toSet());
+
+        // Collect all relevant userIds: registered participants + anyone who submitted
+        Set<Long> userIds = new LinkedHashSet<>();
+        Map<Long, String> usernames = new HashMap<>();
+
+        participationRepository.findLeaderboard(contestId).forEach(cp -> {
+            userIds.add(cp.getUser().getId());
+            usernames.put(cp.getUser().getId(), cp.getUser().getUsername());
+        });
+        submissions.forEach(s -> {
+            userIds.add(s.getUser().getId());
+            usernames.put(s.getUser().getId(), s.getUser().getUsername());
+        });
+
+        // userId → (problemId → submissions sorted by time, already ordered by findAllByContestId)
+        Map<Long, Map<Long, List<com.stackr.api.entity.Submission>>> grouped = new HashMap<>();
+        for (var s : submissions) {
+            Long uid = s.getUser().getId();
+            Long pid = s.getProblem().getId();
+            if (!problemIds.contains(pid)) continue;   // skip off-contest submissions
+            grouped.computeIfAbsent(uid, k -> new HashMap<>())
+                   .computeIfAbsent(pid, k -> new ArrayList<>())
+                   .add(s);
+        }
+
+        List<ContestStandingsDto.StandingsRow> rows = new ArrayList<>();
+        for (Long uid : userIds) {
+            Map<Long, ContestStandingsDto.ProblemCell> cells = new HashMap<>();
+            int totalSolved = 0;
+            int totalPenalty = 0;
+
+            for (var p : problems) {
+                Long pid = p.getId();
+                var subs = grouped.getOrDefault(uid, Map.of()).getOrDefault(pid, List.of());
+                // subs are already in ascending time order (findAllByContestId ORDER BY submittedAt ASC)
+
+                int wrongBefore = 0;
+                boolean solved = false;
+                Integer solvedAt = null;
+
+                for (var s : subs) {
+                    if (s.getVerdict() == com.stackr.api.entity.enums.Verdict.AC) {
+                        solved = true;
+                        if (contest.getStartTime() != null) {
+                            solvedAt = (int) java.time.Duration.between(
+                                    contest.getStartTime(), s.getSubmittedAt()).toMinutes();
+                        }
+                        break; // only count submissions up to first AC
+                    } else if (s.getVerdict() != com.stackr.api.entity.enums.Verdict.PENDING) {
+                        wrongBefore++;
+                    }
+                }
+
+                if (solved) {
+                    totalSolved++;
+                    int pen = (solvedAt != null ? solvedAt : 0) + 20 * wrongBefore;
+                    totalPenalty += pen;
+                }
+                if (!subs.isEmpty()) {
+                    cells.put(pid, new ContestStandingsDto.ProblemCell(solved, wrongBefore, solvedAt));
+                }
+            }
+
+            rows.add(new ContestStandingsDto.StandingsRow(
+                    0, uid, usernames.get(uid), totalSolved, totalPenalty, cells));
+        }
+
+        // Sort: solved DESC → penalty ASC → username ASC
+        rows.sort(Comparator.<ContestStandingsDto.StandingsRow>comparingInt(r -> -r.solved())
+                .thenComparingInt(ContestStandingsDto.StandingsRow::penalty)
+                .thenComparing(ContestStandingsDto.StandingsRow::username));
+
+        // Assign ranks (same solved+penalty → same rank)
+        List<ContestStandingsDto.StandingsRow> ranked = new ArrayList<>();
+        int rank = 1;
+        for (int i = 0; i < rows.size(); i++) {
+            var r = rows.get(i);
+            if (i > 0) {
+                var prev = rows.get(i - 1);
+                if (r.solved() != prev.solved() || r.penalty() != prev.penalty()) rank = i + 1;
+            }
+            ranked.add(new ContestStandingsDto.StandingsRow(
+                    rank, r.userId(), r.username(), r.solved(), r.penalty(), r.cells()));
+        }
+
+        return new ContestStandingsDto(contestId, contest.getTitle(), headers, ranked);
     }
 
     private Contest findOrThrow(Long id) {

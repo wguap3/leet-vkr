@@ -24,3 +24,6 @@ export const createContest = (data: {
   problemIds: number[]
   isPublic: boolean
 }) => api.post<ContestDetail>('/contests', data)
+
+export const getContestStandings = (id: number) =>
+  api.get<import('../types').ContestStandings>(`/contests/${id}/standings`)

@@ -116,6 +116,7 @@ export default function ContestDetailPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <Link to={`/contests/${id}/standings`} className="btn btn-outline btn-sm">🏆 Standings</Link>
         {canOrganize && (
           <Link to={`/contests/${id}/analytics`} className="btn btn-outline btn-sm">📊 Аналитика</Link>
         )}

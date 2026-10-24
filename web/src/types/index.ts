@@ -153,3 +153,21 @@ export interface ContestAnalytics {
     }>
   }>
 }
+
+export interface ContestStandings {
+  contestId: number
+  contestTitle: string
+  problems: Array<{ id: number; title: string; letter: string }>
+  rows: Array<{
+    rank: number
+    userId: number
+    username: string
+    solved: number
+    penalty: number
+    cells: Record<number, {
+      solved: boolean
+      wrongBefore: number
+      solvedAt: number | null
+    }>
+  }>
+}
