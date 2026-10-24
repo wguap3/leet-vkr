@@ -4,6 +4,7 @@ import com.stackr.api.dto.request.CreateContestRequest;
 import com.stackr.api.dto.request.UpdateContestRequest;
 import com.stackr.api.dto.response.*;
 import com.stackr.api.entity.enums.ContestStatus;
+import com.stackr.api.entity.enums.Role;
 import com.stackr.api.security.UserPrincipal;
 import com.stackr.api.service.ContestService;
 import com.stackr.api.service.SubmissionService;
@@ -29,8 +30,12 @@ public class ContestController {
 
     @GetMapping
     public ResponseEntity<List<ContestShortDto>> getAll(
-            @RequestParam(required = false) ContestStatus status) {
-        return ResponseEntity.ok(contestService.getContests(status));
+            @RequestParam(required = false) ContestStatus status,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        Long uid = principal != null ? principal.getId() : null;
+        boolean isOrganizerOrAdmin = principal != null &&
+                (principal.getRole() == Role.ORGANIZER || principal.getRole() == Role.ADMIN);
+        return ResponseEntity.ok(contestService.getContests(status, uid, isOrganizerOrAdmin));
     }
 
     @GetMapping("/{id}")
@@ -39,6 +44,22 @@ public class ContestController {
             @AuthenticationPrincipal UserPrincipal principal) {
         Long uid = principal != null ? principal.getId() : null;
         return ResponseEntity.ok(contestService.getContestById(id, uid));
+    }
+
+    @GetMapping("/invite/{token}")
+    public ResponseEntity<ContestDetailDto> getByInviteToken(
+            @PathVariable String token,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        Long uid = principal != null ? principal.getId() : null;
+        return ResponseEntity.ok(contestService.getContestByInviteToken(token, uid));
+    }
+
+    @PostMapping("/invite/{token}/join")
+    @PreAuthorize("hasRole('CONTESTANT')")
+    public ResponseEntity<ContestDetailDto> joinByInviteToken(
+            @PathVariable String token,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(contestService.registerByInviteToken(token, principal.getId()));
     }
 
     @PostMapping
@@ -98,5 +119,4 @@ public class ContestController {
     public ResponseEntity<ContestStandingsDto> getStandings(@PathVariable Long id) {
         return ResponseEntity.ok(contestService.getStandings(id));
     }
-
 }

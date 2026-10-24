@@ -5,3 +5,43 @@
 .tab { padding: 0 16px; height: 40px; font-size: 14px; font-weight: 500; color: var(--text-3); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: all .15s; margin-bottom: -1px; }
 .tab:hover { color: var(--text-1); }
 .activeTab { padding: 0 16px; height: 40px; font-size: 14px; font-weight: 600; color: var(--violet); background: none; border: none; border-bottom: 2px solid var(--violet); cursor: pointer; margin-bottom: -1px; }
+
+/* Invite link box */
+.inviteBox {
+  background: rgba(139,92,246,.08);
+  border: 1px solid rgba(139,92,246,.2);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+.inviteLabel {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: var(--violet);
+  text-transform: uppercase; letter-spacing: .04em;
+  margin-bottom: 10px;
+}
+.inviteLinkRow {
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap;
+}
+.inviteLink {
+  flex: 1; min-width: 0;
+  font-size: 12px; font-family: 'JetBrains Mono', monospace;
+  color: var(--text-1);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: block;
+}
+.copyBtn {
+  flex-shrink: 0;
+  padding: 6px 14px; border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 600;
+  background: var(--violet-dim); color: var(--violet);
+  border: 1px solid rgba(139,92,246,.3);
+  cursor: pointer; transition: all .15s;
+}
+.copyBtn:hover { background: rgba(139,92,246,.2); border-color: var(--violet); }
+.copySuccess { background: var(--green-dim) !important; color: var(--green) !important; border-color: rgba(34,197,94,.3) !important; }

@@ -41,11 +41,13 @@ export default function ContestDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuthStore()
   const canOrganize = user?.role === 'ORGANIZER' || user?.role === 'ADMIN'
+  const isOwnContest = contest?.organizerId != null && user?.id != null && contest.organizerId === user.id
   const [contest, setContest] = useState<ContestDetail | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'problems' | 'leaderboard'>('problems')
   const [registering, setRegistering] = useState(false)
+  const [copySuccess, setCopySuccess] = useState(false)
 
   const countdownTarget = contest?.status === 'RUNNING'
     ? contest.endTime
@@ -139,6 +141,33 @@ export default function ContestDetailPage() {
 
       {contest.description && (
         <p style={{ color: 'var(--text-2)', fontSize: 14, marginBottom: 20 }}>{contest.description}</p>
+      )}
+
+      {!contest.isPublic && isOwnContest && contest.inviteToken && (
+        <div className={styles.inviteBox}>
+          <div className={styles.inviteLabel}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            Приватная ссылка-приглашение
+          </div>
+          <div className={styles.inviteLinkRow}>
+            <code className={styles.inviteLink}>
+              {window.location.origin}/contests/invite/{contest.inviteToken}
+            </code>
+            <button
+              className={styles.copyBtn + (copySuccess ? ' ' + styles.copySuccess : '')}
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.origin + '/contests/invite/' + contest.inviteToken)
+                setCopySuccess(true)
+                setTimeout(() => setCopySuccess(false), 2000)
+              }}
+            >
+              {copySuccess ? '✓ Скопировано' : 'Копировать'}
+            </button>
+          </div>
+        </div>
       )}
 
       <div className={styles.tabs}>

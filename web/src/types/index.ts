@@ -87,6 +87,8 @@ export interface ContestDetail {
   problems: ProblemShort[]
   isRegistered: boolean
   isPublic: boolean
+  inviteToken?: string
+  organizerId?: number
 }
 
 export interface LeaderboardEntry {

@@ -15,5 +15,7 @@ public record ContestDetailDto(
         ContestStatus status,
         List<ProblemShortDto> problems,
         @JsonProperty("isRegistered") boolean isRegistered,
-        @JsonProperty("isPublic") boolean isPublic
+        @JsonProperty("isPublic") boolean isPublic,
+        String inviteToken,
+        Long organizerId
 ) {}

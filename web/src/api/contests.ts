@@ -39,3 +39,9 @@ export const updateContest = (id: number, data: {
 
 export const deleteContest = (id: number) =>
   api.delete(`/contests/${id}`)
+
+export const getContestByInviteToken = (token: string) =>
+  api.get<ContestDetail>(`/contests/invite/${token}`)
+
+export const joinByInviteToken = (token: string) =>
+  api.post<ContestDetail>(`/contests/invite/${token}/join`)

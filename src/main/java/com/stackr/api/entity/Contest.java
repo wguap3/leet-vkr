@@ -55,6 +55,9 @@ public class Contest {
     @Builder.Default
     private boolean isPublic = true;
 
+    @Column(name = "invite_token", unique = true)
+    private String inviteToken;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

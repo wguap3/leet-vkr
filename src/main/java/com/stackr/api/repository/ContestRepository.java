@@ -10,11 +10,18 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ContestRepository extends JpaRepository<Contest, Long> {
 
     List<Contest> findByStatus(ContestStatus status);
+
+    List<Contest> findByIsPublicTrue();
+
+    List<Contest> findByIsPublicTrueAndStatus(ContestStatus status);
+
+    Optional<Contest> findByInviteToken(String inviteToken);
 
     @Query("SELECT c FROM Contest c WHERE c.status = 'UPCOMING' AND c.startTime <= :now")
     List<Contest> findUpcomingToStart(@Param("now") LocalDateTime now);
@@ -25,7 +32,6 @@ public interface ContestRepository extends JpaRepository<Contest, Long> {
     @Query("SELECT COUNT(cp) FROM ContestParticipation cp WHERE cp.contest.id = :contestId")
     long countParticipants(@Param("contestId") Long contestId);
 
-    /** Batch participant count per contest — returns [contestId, count] */
     @Query("SELECT cp.contest.id, COUNT(cp) FROM ContestParticipation cp " +
            "WHERE cp.contest.id IN :contestIds " +
            "GROUP BY cp.contest.id")

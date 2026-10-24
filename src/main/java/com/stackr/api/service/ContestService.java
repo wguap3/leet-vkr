@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
 import java.util.stream.Collectors;
 
 @Service
@@ -34,13 +33,21 @@ public class ContestService {
     private final SubmissionRepository submissionRepository;
 
     @Transactional(readOnly = true)
-    public List<ContestShortDto> getContests(ContestStatus status) {
-        List<Contest> contests = (status != null)
-                ? contestRepository.findByStatus(status)
-                : contestRepository.findAll();
+    public List<ContestShortDto> getContests(ContestStatus status, Long userId, boolean isOrganizerOrAdmin) {
+        List<Contest> contests;
+        if (isOrganizerOrAdmin) {
+            // Organizers/Admins see all contests (including private)
+            contests = (status != null)
+                    ? contestRepository.findByStatus(status)
+                    : contestRepository.findAll();
+        } else {
+            // Regular users only see public contests
+            contests = (status != null)
+                    ? contestRepository.findByIsPublicTrueAndStatus(status)
+                    : contestRepository.findByIsPublicTrue();
+        }
         if (contests.isEmpty()) return List.of();
 
-        // Batch participant counts — 1 query instead of N
         List<Long> ids = contests.stream().map(Contest::getId).toList();
         Map<Long, Long> participantMap = new HashMap<>();
         contestRepository.countParticipantsInContests(ids)
@@ -58,11 +65,39 @@ public class ContestService {
         return toDetailDto(contest, registered, userId);
     }
 
+    @Transactional(readOnly = true)
+    public ContestDetailDto getContestByInviteToken(String token, Long userId) {
+        var contest = contestRepository.findByInviteToken(token)
+                .orElseThrow(() -> new EntityNotFoundException("Invalid invite link"));
+        boolean registered = userId != null && participationRepository.existsByUserIdAndContestId(userId, contest.getId());
+        return toDetailDto(contest, registered, userId);
+    }
+
+    @Transactional
+    public ContestDetailDto registerByInviteToken(String token, Long userId) {
+        var contest = contestRepository.findByInviteToken(token)
+                .orElseThrow(() -> new EntityNotFoundException("Invalid invite link"));
+        if (contest.getStatus() == ContestStatus.FINISHED) {
+            throw new BusinessException("Contest is already finished");
+        }
+        if (!participationRepository.existsByUserIdAndContestId(userId, contest.getId())) {
+            var user = userRepository.findById(userId)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found"));
+            var participation = ContestParticipation.builder()
+                    .user(user)
+                    .contest(contest)
+                    .build();
+            participationRepository.save(participation);
+        }
+        return toDetailDto(contest, true, userId);
+    }
+
     @Transactional
     public ContestDetailDto createContest(CreateContestRequest req, Long organizerId) {
         var organizer = userRepository.findById(organizerId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         List<Problem> problems = resolveProblems(req.problemIds());
+        boolean isPublic = req.isPublic() != null ? req.isPublic() : true;
         var contest = Contest.builder()
                 .title(req.title())
                 .description(req.description())
@@ -70,7 +105,8 @@ public class ContestService {
                 .endTime(req.endTime())
                 .problems(problems)
                 .organizer(organizer)
-                .isPublic(req.isPublic() != null ? req.isPublic() : true)
+                .isPublic(isPublic)
+                .inviteToken(isPublic ? null : UUID.randomUUID().toString())
                 .build();
         contest = contestRepository.save(contest);
         return toDetailDto(contest, false, organizerId);
@@ -80,7 +116,6 @@ public class ContestService {
     public ContestDetailDto updateContest(Long id, UpdateContestRequest req, Long userId) {
         var contest = findOrThrow(id);
 
-        // Ownership check: only the organizer or an admin can update this contest
         if (!contest.getOrganizer().getId().equals(userId)) {
             var caller = userRepository.findById(userId)
                     .orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -94,7 +129,17 @@ public class ContestService {
         if (req.startTime() != null) contest.setStartTime(req.startTime());
         if (req.endTime() != null) contest.setEndTime(req.endTime());
         if (req.problemIds() != null) contest.setProblems(resolveProblems(req.problemIds()));
-        if (req.isPublic() != null) contest.setPublic(req.isPublic());
+        if (req.isPublic() != null) {
+            boolean wasPublic = contest.isPublic();
+            boolean nowPublic = req.isPublic();
+            contest.setPublic(nowPublic);
+            // Generate invite token if switching to private
+            if (!nowPublic && (wasPublic || contest.getInviteToken() == null)) {
+                contest.setInviteToken(UUID.randomUUID().toString());
+            } else if (nowPublic) {
+                contest.setInviteToken(null);
+            }
+        }
         contest = contestRepository.save(contest);
         boolean registered = participationRepository.existsByUserIdAndContestId(userId, id);
         return toDetailDto(contest, registered, userId);
@@ -149,14 +194,11 @@ public class ContestService {
         var contest = findOrThrow(contestId);
         var submissions = submissionRepository.findAllByContestId(contestId);
 
-        // Build problem headers
         List<ContestAnalyticsDto.ProblemHeader> problems = contest.getProblems().stream()
                 .map(p -> new ContestAnalyticsDto.ProblemHeader(p.getId(), p.getTitle()))
                 .toList();
 
-        // Group submissions by user, then by problem
         Map<Long, String> userNames = new HashMap<>();
-        // userId → (problemId → list of submissions)
         Map<Long, Map<Long, List<com.stackr.api.entity.Submission>>> grouped = new HashMap<>();
 
         for (var s : submissions) {
@@ -192,7 +234,6 @@ public class ContestService {
             rows.add(new ContestAnalyticsDto.ParticipantRow(uid, userNames.get(uid), results));
         }
 
-        // Sort by solved desc, then username
         rows.sort(Comparator.<ContestAnalyticsDto.ParticipantRow>comparingInt(r -> -r.results().values().stream()
                         .mapToInt(pr -> pr.solved() ? 1 : 0).sum())
                 .thenComparing(r -> r.username()));
@@ -200,13 +241,11 @@ public class ContestService {
         return new ContestAnalyticsDto(contestId, contest.getTitle(), problems, rows);
     }
 
-
     @Transactional(readOnly = true)
     public ContestStandingsDto getStandings(Long contestId) {
         var contest = findOrThrow(contestId);
         var submissions = submissionRepository.findAllByContestId(contestId);
 
-        // problem order  A, B, C ...
         List<com.stackr.api.entity.Problem> problems = contest.getProblems();
         List<ContestStandingsDto.ProblemHeader> headers = new ArrayList<>();
         for (int i = 0; i < problems.size(); i++) {
@@ -217,7 +256,6 @@ public class ContestService {
         Set<Long> problemIds = problems.stream()
                 .map(com.stackr.api.entity.Problem::getId).collect(Collectors.toSet());
 
-        // Collect all relevant userIds: registered participants + anyone who submitted
         Set<Long> userIds = new LinkedHashSet<>();
         Map<Long, String> usernames = new HashMap<>();
 
@@ -230,12 +268,11 @@ public class ContestService {
             usernames.put(s.getUser().getId(), s.getUser().getUsername());
         });
 
-        // userId → (problemId → submissions sorted by time, already ordered by findAllByContestId)
         Map<Long, Map<Long, List<com.stackr.api.entity.Submission>>> grouped = new HashMap<>();
         for (var s : submissions) {
             Long uid = s.getUser().getId();
             Long pid = s.getProblem().getId();
-            if (!problemIds.contains(pid)) continue;   // skip off-contest submissions
+            if (!problemIds.contains(pid)) continue;
             grouped.computeIfAbsent(uid, k -> new HashMap<>())
                    .computeIfAbsent(pid, k -> new ArrayList<>())
                    .add(s);
@@ -250,7 +287,6 @@ public class ContestService {
             for (var p : problems) {
                 Long pid = p.getId();
                 var subs = grouped.getOrDefault(uid, Map.of()).getOrDefault(pid, List.of());
-                // subs are already in ascending time order (findAllByContestId ORDER BY submittedAt ASC)
 
                 int wrongBefore = 0;
                 boolean solved = false;
@@ -263,7 +299,7 @@ public class ContestService {
                             solvedAt = (int) java.time.Duration.between(
                                     contest.getStartTime(), s.getSubmittedAt()).toMinutes();
                         }
-                        break; // only count submissions up to first AC
+                        break;
                     } else if (s.getVerdict() != com.stackr.api.entity.enums.Verdict.PENDING) {
                         wrongBefore++;
                     }
@@ -283,12 +319,10 @@ public class ContestService {
                     0, uid, usernames.get(uid), totalSolved, totalPenalty, cells));
         }
 
-        // Sort: solved DESC → penalty ASC → username ASC
         rows.sort(Comparator.<ContestStandingsDto.StandingsRow>comparingInt(r -> -r.solved())
                 .thenComparingInt(ContestStandingsDto.StandingsRow::penalty)
                 .thenComparing(ContestStandingsDto.StandingsRow::username));
 
-        // Assign ranks (same solved+penalty → same rank)
         List<ContestStandingsDto.StandingsRow> ranked = new ArrayList<>();
         int rank = 1;
         for (int i = 0; i < rows.size(); i++) {
@@ -323,7 +357,6 @@ public class ContestService {
     }
 
     private ContestDetailDto toDetailDto(Contest c, boolean registered, Long userId) {
-        // Batch-fetch solved counts for all problems in this contest
         List<Long> problemIds = c.getProblems().stream().map(Problem::getId).toList();
         Map<Long, Long> solvedMap = new HashMap<>();
         if (!problemIds.isEmpty()) {
@@ -339,7 +372,15 @@ public class ContestService {
                             .collect(Collectors.toSet());
                     return new ProblemShortDto(p.getId(), p.getTitle(), p.getDifficulty(), tags, solved, null);
                 }).toList();
+
+        // Only expose inviteToken to the organizer
+        String inviteToken = null;
+        if (userId != null && c.getOrganizer().getId().equals(userId)) {
+            inviteToken = c.getInviteToken();
+        }
+
         return new ContestDetailDto(c.getId(), c.getTitle(), c.getDescription(),
-                c.getStartTime(), c.getEndTime(), c.getStatus(), problems, registered, c.isPublic());
+                c.getStartTime(), c.getEndTime(), c.getStatus(), problems, registered, c.isPublic(),
+                inviteToken, c.getOrganizer().getId());
     }
 }
