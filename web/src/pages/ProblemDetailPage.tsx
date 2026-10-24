@@ -206,7 +206,13 @@ export default function ProblemDetailPage() {
             ))}
           </div>
           {isOrganizer && (
-            <div style={{ marginTop: '0.5rem' }}>
+            <div style={{ marginTop: '0.5rem', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <Link
+                to={`/problems/${pid}/edit`}
+                className="btn btn-outline btn-sm"
+              >
+                ✏️ Редактировать
+              </Link>
               <Link
                 to={`/problems/${pid}/testcases`}
                 style={{ fontSize: '0.85rem', color: 'var(--accent)', textDecoration: 'none' }}

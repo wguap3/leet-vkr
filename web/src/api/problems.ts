@@ -61,3 +61,16 @@ export const updateTestCase = (problemId: number, id: number, data: {
   isPublic?: boolean
   orderIndex?: number
 }) => api.put<TestCase>(`/problems/${problemId}/testcases/${id}`, data)
+
+export const updateProblem = (id: number, data: {
+  title?: string
+  description?: string
+  difficulty?: string
+  timeLimitMs?: number
+  memoryLimitMb?: number
+  tagIds?: number[]
+  codeTemplate?: string
+}) => api.put<import('../types').ProblemDetail>(`/problems/${id}`, data)
+
+export const getHintsFull = (problemId: number) =>
+  api.get<import('../types').Hint[]>(`/problems/${problemId}/hints`)
