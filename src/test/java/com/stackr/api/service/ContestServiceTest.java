@@ -84,8 +84,6 @@ class ContestServiceTest {
                 List.of(), true);
         given(userRepository.findById(1L)).willReturn(Optional.of(organizer));
         given(contestRepository.save(any())).willReturn(runningContest);
-        given(participationRepository.findLeaderboard(5L)).willReturn(List.of());
-
         ContestDetailDto dto = contestService.createContest(req, 1L);
 
         assertThat(dto.id()).isEqualTo(5L);

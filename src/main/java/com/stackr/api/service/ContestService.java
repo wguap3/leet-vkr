@@ -35,7 +35,17 @@ public class ContestService {
         List<Contest> contests = (status != null)
                 ? contestRepository.findByStatus(status)
                 : contestRepository.findAll();
-        return contests.stream().map(this::toShortDto).toList();
+        if (contests.isEmpty()) return List.of();
+
+        // Batch participant counts — 1 query instead of N
+        List<Long> ids = contests.stream().map(Contest::getId).toList();
+        Map<Long, Long> participantMap = new HashMap<>();
+        contestRepository.countParticipantsInContests(ids)
+                .forEach(row -> participantMap.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue()));
+
+        return contests.stream()
+                .map(c -> toShortDto(c, participantMap.getOrDefault(c.getId(), 0L)))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -200,16 +210,23 @@ public class ContestService {
                 .collect(Collectors.toList());
     }
 
-    private ContestShortDto toShortDto(Contest c) {
-        long participants = contestRepository.countParticipants(c.getId());
+    private ContestShortDto toShortDto(Contest c, long participants) {
         return new ContestShortDto(c.getId(), c.getTitle(), c.getStartTime(), c.getEndTime(),
                 c.getStatus(), c.getProblems().size(), participants);
     }
 
     private ContestDetailDto toDetailDto(Contest c, boolean registered, Long userId) {
+        // Batch-fetch solved counts for all problems in this contest
+        List<Long> problemIds = c.getProblems().stream().map(Problem::getId).toList();
+        Map<Long, Long> solvedMap = new HashMap<>();
+        if (!problemIds.isEmpty()) {
+            submissionRepository.countDistinctUsersByProblemIdsAndVerdict(problemIds, Verdict.AC)
+                    .forEach(row -> solvedMap.put((Long) row[0], (Long) row[1]));
+        }
+
         List<ProblemShortDto> problems = c.getProblems().stream()
                 .map(p -> {
-                    long solved = submissionRepository.countDistinctUsersByProblemIdAndVerdict(p.getId(), Verdict.AC);
+                    long solved = solvedMap.getOrDefault(p.getId(), 0L);
                     Set<TagDto> tags = p.getTags().stream()
                             .map(t -> new TagDto(t.getId(), t.getName()))
                             .collect(Collectors.toSet());

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -23,4 +24,10 @@ public interface ContestRepository extends JpaRepository<Contest, Long> {
 
     @Query("SELECT COUNT(cp) FROM ContestParticipation cp WHERE cp.contest.id = :contestId")
     long countParticipants(@Param("contestId") Long contestId);
+
+    /** Batch participant count per contest — returns [contestId, count] */
+    @Query("SELECT cp.contest.id, COUNT(cp) FROM ContestParticipation cp " +
+           "WHERE cp.contest.id IN :contestIds " +
+           "GROUP BY cp.contest.id")
+    List<Object[]> countParticipantsInContests(@Param("contestIds") Collection<Long> contestIds);
 }
