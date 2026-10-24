@@ -24,6 +24,7 @@ public class SubmissionProcessor {
     private final UserRepository userRepository;
     private final ContestParticipationRepository participationRepository;
     private final RunnerClient runnerClient;
+    private final NotificationService notificationService;
 
     public RunnerClient getRunnerClient() { return runnerClient; }
 
@@ -54,6 +55,9 @@ public class SubmissionProcessor {
 
         submissionRepository.save(submission);
 
+        // Send notification about verdict
+        sendVerdictNotification(submission, problemId);
+
         // isFirstAc check AFTER saving the verdict, not before:
         // count how many AC submissions now exist for this user+problem.
         // If exactly 1 (this one), it's the first AC — prevents double-credit race condition.
@@ -67,6 +71,25 @@ public class SubmissionProcessor {
                 updateContestScore(submission);
             }
         }
+    }
+
+    private void sendVerdictNotification(Submission submission, Long problemId) {
+        Long userId = submission.getUser().getId();
+        String problemTitle = submission.getProblem() != null
+                ? submission.getProblem().getTitle()
+                : "задача #" + problemId;
+        String link = "/problems/" + problemId;
+
+        String message = switch (submission.getVerdict()) {
+            case AC  -> "✓ Принято: «" + problemTitle + "»";
+            case WA  -> "✗ Неверный ответ: «" + problemTitle + "»";
+            case TLE -> "⏱ Превышен лимит времени: «" + problemTitle + "»";
+            case CE  -> "⚙ Ошибка компиляции: «" + problemTitle + "»";
+            case RE  -> "💥 Ошибка выполнения: «" + problemTitle + "»";
+            default  -> "Посылка проверена: «" + problemTitle + "»";
+        };
+
+        notificationService.create(userId, message, link);
     }
 
     private void updateRating(Long userId) {
