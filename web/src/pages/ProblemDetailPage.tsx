@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import Editor from '@monaco-editor/react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import * as problemsApi from '../api/problems'
 import type { Hint, ProblemDetail, ProblemStats, RunCodeResult, Submission } from '../types'
 import styles from './ProblemDetailPage.module.css'
+import { useAuthStore } from '../store/authStore'
 
 const DEFAULT_TEMPLATE = `import java.util.*;
 import java.io.*;
@@ -49,6 +50,8 @@ function StatBar({ label, count, total, color }: { label: string; count: number;
 export default function ProblemDetailPage() {
   const { id } = useParams<{ id: string }>()
   const pid = Number(id)
+  const { user } = useAuthStore()
+  const isOrganizer = user?.role === 'ORGANIZER' || user?.role === 'ADMIN'
   const storageKey = `stackr_code_${id}`
 
   const [problem, setProblem] = useState<ProblemDetail | null>(null)
@@ -202,6 +205,16 @@ export default function ProblemDetailPage() {
               <span key={t.id} className={styles.metaChip}>{t.name}</span>
             ))}
           </div>
+          {isOrganizer && (
+            <div style={{ marginTop: '0.5rem' }}>
+              <Link
+                to={`/problems/${pid}/testcases`}
+                style={{ fontSize: '0.85rem', color: 'var(--accent)', textDecoration: 'none' }}
+              >
+                ⚙ Управление тест-кейсами
+              </Link>
+            </div>
+          )}
           <div className={styles.tabs}>
             {(['description', 'hints', 'stats', 'submissions'] as const).map(t => (
               <button

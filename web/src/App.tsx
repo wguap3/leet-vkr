@@ -14,6 +14,7 @@ import CreateProblemPage from './pages/CreateProblemPage'
 import CreateContestPage from './pages/CreateContestPage'
 import ContestAnalyticsPage from './pages/ContestAnalyticsPage'
 import AdminPanel from './pages/AdminPanel'
+import TestCasesPage from './pages/TestCasesPage'
 import { useAuthStore } from './store/authStore'
 import type { Role } from './types'
 
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/profile/:id" element={<ProtectedRoute><PublicProfilePage /></ProtectedRoute>} />
         <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
+        <Route path="/problems/:id/testcases" element={<OrganizerRoute><TestCasesPage /></OrganizerRoute>} />
         <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
       </Routes>
     </BrowserRouter>

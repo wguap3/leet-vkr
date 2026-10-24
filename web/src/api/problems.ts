@@ -51,3 +51,13 @@ export const setVisible = (problemId: number, visible: boolean) =>
 
 export const getTags = () =>
   api.get<{ id: number; name: string }[]>('/tags')
+
+export const getTestCases = (problemId: number) =>
+  api.get<TestCase[]>(`/problems/${problemId}/testcases`)
+
+export const updateTestCase = (problemId: number, id: number, data: {
+  inputData?: string
+  expectedOutput?: string
+  isPublic?: boolean
+  orderIndex?: number
+}) => api.put<TestCase>(`/problems/${problemId}/testcases/${id}`, data)
