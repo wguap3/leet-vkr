@@ -1,34 +1,69 @@
 import { Link } from 'react-router-dom'
 import styles from './LandingPage.module.css'
 
+const FeatureIcons = {
+  zap: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+  ),
+  trophy: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 21H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-3"/>
+      <path d="M12 21V9"/><path d="M9 9h6"/>
+      <path d="M7 3a1 1 0 0 0-1 1v1a5 5 0 0 0 6 4.9A5 5 0 0 0 18 5V4a1 1 0 0 0-1-1H7z"/>
+    </svg>
+  ),
+  trending: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+    </svg>
+  ),
+  target: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+    </svg>
+  ),
+  shield: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  ),
+  code: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+    </svg>
+  ),
+}
+
 const FEATURES = [
   {
-    icon: '⚡',
+    icon: FeatureIcons.zap,
     title: 'Мгновенная проверка',
     desc: 'Код компилируется и тестируется за секунды. Видишь результат сразу после отправки.',
   },
   {
-    icon: '🏆',
+    icon: FeatureIcons.trophy,
     title: 'Контесты в реальном времени',
     desc: 'Соревнуйся с другими участниками. Таблица результатов обновляется на лету.',
   },
   {
-    icon: '📈',
+    icon: FeatureIcons.trending,
     title: 'Рейтинговая система',
     desc: 'Решай задачи, зарабатывай рейтинг. Отслеживай прогресс на глобальной доске лидеров.',
   },
   {
-    icon: '🎯',
+    icon: FeatureIcons.target,
     title: 'Задачи разного уровня',
     desc: 'Лёгкие, средние и сложные задачи. Каждая с детальным условием и примерами.',
   },
   {
-    icon: '🔒',
+    icon: FeatureIcons.shield,
     title: 'Безопасное выполнение',
     desc: 'Код запускается в изолированном контейнере с лимитами по времени и памяти.',
   },
   {
-    icon: '✏️',
+    icon: FeatureIcons.code,
     title: 'Встроенный редактор',
     desc: 'Monaco Editor с подсветкой синтаксиса Java — как в VS Code, прямо в браузере.',
   },
@@ -125,7 +160,18 @@ export default function LandingPage() {
 
       {/* ── Footer ── */}
       <footer className={styles.footer}>
-        <span>⚡ Stackr — дипломный проект</span>
+        <span style={{display:'flex',alignItems:'center',gap:8,justifyContent:'center'}}>
+          <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
+            <rect x="1" y="1" width="20" height="20" rx="5" fill="url(#footer-logo-grad)" />
+            <path d="M14.5 4.5L8 11H13L7.5 17.5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            <defs>
+              <linearGradient id="footer-logo-grad" x1="1" y1="1" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#8b5cf6"/><stop offset="1" stopColor="#6d28d9"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          Stackr — дипломный проект
+        </span>
       </footer>
     </div>
   )

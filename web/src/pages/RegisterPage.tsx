@@ -44,7 +44,17 @@ export default function RegisterPage() {
   return (
     <div className={styles.wrapper}>
       <div className={`card ${styles.card}`}>
-        <div className={styles.logoMark}>⚡ Stackr</div>
+        <div className={styles.logoMark}><svg width="20" height="20" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display:'inline-block',verticalAlign:'middle',marginRight:6}}>
+            <rect x="1" y="1" width="20" height="20" rx="5" fill="url(#reg-logo-grad)" />
+            <path d="M14.5 4.5L8 11H13L7.5 17.5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            <defs>
+              <linearGradient id="reg-logo-grad" x1="1" y1="1" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#8b5cf6"/>
+                <stop offset="1" stopColor="#6d28d9"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          Stackr</div>
         <h1 className={styles.title}>Регистрация</h1>
         <p className={styles.subtitle}>Создай аккаунт и начни решать задачи</p>
         {error && <div className={styles.error}>{error}</div>}

@@ -54,6 +54,7 @@ export default function EditContestPage() {
       setStartTime(toLocalInput(contest.startTime))
       setEndTime(toLocalInput(contest.endTime))
       setSelectedProblems(contest.problems.map(p => p.id))
+      setIsPublic(contest.isPublic)
       setAllProblems(page.content)
     }).catch(() => setError('Не удалось загрузить контест'))
       .finally(() => { setLoading(false); setLoadingProblems(false) })

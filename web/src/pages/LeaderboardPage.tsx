@@ -1,3 +1,4 @@
+import React from 'react'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import api from '../api/client'
@@ -5,7 +6,11 @@ import type { Page, UserProfile } from '../types'
 import RatingBadge from '../components/RatingBadge'
 import styles from './LeaderboardPage.module.css'
 
-const MEDALS = ['🥇', '🥈', '🥉']
+const MEDALS: React.ReactNode[] = [
+  <svg key="1" width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#f59e0b" stroke="#d97706" strokeWidth="1.5"/><text x="12" y="16" textAnchor="middle" fontSize="11" fontWeight="700" fill="white">1</text></svg>,
+  <svg key="2" width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#94a3b8" stroke="#64748b" strokeWidth="1.5"/><text x="12" y="16" textAnchor="middle" fontSize="11" fontWeight="700" fill="white">2</text></svg>,
+  <svg key="3" width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#cd7c3a" stroke="#b45309" strokeWidth="1.5"/><text x="12" y="16" textAnchor="middle" fontSize="11" fontWeight="700" fill="white">3</text></svg>,
+]
 const RANK_CLS = ['', styles.gold, styles.silver, styles.bronze]
 
 export default function LeaderboardPage() {

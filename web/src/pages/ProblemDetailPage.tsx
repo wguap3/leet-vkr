@@ -271,7 +271,14 @@ export default function ProblemDetailPage() {
               hints.map((h, i) => (
                 <div key={h.id} className={`${styles.hintCard} ${h.unlocked ? styles.hintUnlocked : styles.hintLocked}`}>
                   <div className={styles.hintHeader}>
-                    <span className={styles.hintNum}>{h.unlocked ? '💡' : '🔒'} Подсказка {i + 1}</span>
+                    <span className={styles.hintNum}>
+                      {h.unlocked ? (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 4.17-3.33 5.67-5 7H10c-1.67-1.33-5-2.83-5-7a7 7 0 0 1 7-7z"/></svg>
+                      ) : (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      )}
+                      Подсказка {i + 1}
+                    </span>
                     {!h.unlocked && (
                       <span className={styles.hintUnlockHint}>
                         Откроется после {h.unlocksAfterAttempts} неверных попыток

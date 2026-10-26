@@ -101,7 +101,11 @@ export default function ContestDetailPage() {
                 ? (countdownMs < 5 * 60 * 1000 ? 'var(--red)' : countdownMs < 15 * 60 * 1000 ? 'var(--yellow)' : 'var(--green)')
                 : 'var(--text-2)',
             }}>
-              {contest.status === 'RUNNING' ? '⏱ ' : '🕐 '}
+              {contest.status === 'RUNNING' ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{display:'inline',verticalAlign:'middle',marginRight:4}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{display:'inline',verticalAlign:'middle',marginRight:4}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              )}
               {fmtCountdown(countdownMs)}
               <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-3)', marginLeft: 6 }}>
                 {contest.status === 'RUNNING' ? 'осталось' : 'до начала'}
@@ -121,11 +125,20 @@ export default function ContestDetailPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <Link to={`/contests/${id}/standings`} className="btn btn-outline btn-sm">🏆 Standings</Link>
+        <Link to={`/contests/${id}/standings`} className="btn btn-outline btn-sm" style={{display:'inline-flex',alignItems:'center',gap:5}}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 21H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-3"/><path d="M12 21V9"/><path d="M9 9h6"/><path d="M7 3a1 1 0 0 0-1 1v1a5 5 0 0 0 6 4.9A5 5 0 0 0 18 5V4a1 1 0 0 0-1-1H7z"/></svg>
+          Standings
+        </Link>
         {canOrganize && (
           <>
-          <Link to={`/contests/${id}/edit`} className="btn btn-outline btn-sm">✏️ Редактировать</Link>
-          <Link to={`/contests/${id}/analytics`} className="btn btn-outline btn-sm">📊 Аналитика</Link>
+          <Link to={`/contests/${id}/edit`} className="btn btn-outline btn-sm" style={{display:'inline-flex',alignItems:'center',gap:5}}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Редактировать
+          </Link>
+          <Link to={`/contests/${id}/analytics`} className="btn btn-outline btn-sm" style={{display:'inline-flex',alignItems:'center',gap:5}}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Аналитика
+          </Link>
           </>
         )}
         {!contest.isRegistered && contest.status !== 'FINISHED' && (
