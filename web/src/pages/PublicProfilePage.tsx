@@ -27,7 +27,7 @@ export default function PublicProfilePage() {
   if (notFound || !profile) return (
     <div className="page-container">
       <div className="empty-state" style={{ marginTop: 80 }}>
-        <p style={{ fontSize: 48, marginBottom: 12 }}>🔍</p>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{marginBottom:12,color:'var(--text-3)'}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <p style={{ fontWeight: 600, marginBottom: 8 }}>Пользователь не найден</p>
         <Link to="/leaderboard" className="btn btn-outline btn-sm">← Рейтинг</Link>
       </div>

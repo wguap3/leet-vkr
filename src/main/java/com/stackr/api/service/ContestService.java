@@ -146,9 +146,10 @@ public class ContestService {
     }
 
     @Transactional
-    public void deleteContest(Long id) {
-        if (!contestRepository.existsById(id)) {
-            throw new EntityNotFoundException("Contest not found: " + id);
+    public void deleteContest(Long id, Long requesterId, boolean isAdmin) {
+        var contest = findOrThrow(id);
+        if (!isAdmin && !contest.getOrganizer().getId().equals(requesterId)) {
+            throw new BusinessException("You are not authorized to delete this contest");
         }
         contestRepository.deleteById(id);
     }

@@ -80,9 +80,9 @@ export default function ProblemDetailPage() {
   const [stats, setStats] = useState<ProblemStats | null>(null)
   const [statsLoading, setStatsLoading] = useState(false)
 
-  // Load submission history when tab opens
+  // Load submission history when tab opens (only if not yet loaded)
   useEffect(() => {
-    if (tab !== 'submissions') return
+    if (tab !== 'submissions' || historyLoaded) return
     setHistoryLoading(true)
     import('../api/client').then(m =>
       m.default.get<{ content: Submission[] }>(`/submissions/my?problemId=${pid}&size=20`)
@@ -91,10 +91,11 @@ export default function ProblemDetailPage() {
       if (data.content.length > 0) setLastSubmission(data.content[0])
       setHistoryLoaded(true)
     }).catch(() => {}).finally(() => setHistoryLoading(false))
-  }, [tab, pid])
+  }, [tab, pid, historyLoaded])
 
   // Autosave
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>()
+  const pollInterval = useRef<ReturnType<typeof setInterval>>()
   const handleCodeChange = (v: string | undefined) => {
     const val = v ?? ''
     setCode(val)
@@ -141,6 +142,11 @@ export default function ProblemDetailPage() {
     }
   }, [tab, pid])
 
+  // Cleanup polling interval on unmount
+  useEffect(() => {
+    return () => { clearInterval(pollInterval.current); clearTimeout(autoSaveTimer.current) }
+  }, [])
+
   const handleSubmit = async () => {
     setSubmitting(true)
     setTab('submissions')
@@ -148,27 +154,22 @@ export default function ProblemDetailPage() {
       const { data } = await problemsApi.submit(pid, code)
       setLastSubmission(data)
       let attempts = 0
-      const poll = setInterval(async () => {
+      clearInterval(pollInterval.current)
+      pollInterval.current = setInterval(async () => {
         attempts++
         try {
           const { data: sub } = await import('../api/client').then(m =>
             m.default.get(`/submissions/${data.id}`)
           )
           if (sub.verdict !== 'PENDING' || attempts > 20) {
-            clearInterval(poll)
+            clearInterval(pollInterval.current)
             setLastSubmission(sub)
             // Refresh hints after submission (unlock state may change)
             setHints([])
             // Refresh submission history
             setHistoryLoaded(false)
-            import('../api/client').then(m =>
-              m.default.get<{ content: Submission[] }>(`/submissions/my?problemId=${pid}&size=20`)
-            ).then(({ data }) => {
-              setSubmissionHistory(data.content)
-              setHistoryLoaded(true)
-            }).catch(() => {})
           }
-        } catch { clearInterval(poll) }
+        } catch { clearInterval(pollInterval.current) }
       }, 1500)
     } catch (err: any) {
       alert(err.response?.data?.message || 'Ошибка при отправке')
@@ -202,7 +203,7 @@ export default function ProblemDetailPage() {
           <div className={styles.meta}>
             <span className={`badge badge-${problem.difficulty.toLowerCase()}`}>{DIFF_LABELS[problem.difficulty]}</span>
             <span className={styles.metaChip}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{verticalAlign:'middle',marginRight:3}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>{problem.timeLimitMs} мс</span>
-            <span className={styles.metaChip}>💾 {problem.memoryLimitMb} МБ</span>
+            <span className={styles.metaChip}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{verticalAlign:'middle',marginRight:3}}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>{problem.memoryLimitMb} МБ</span>
             {Array.from(problem.tags).map(t => (
               <span key={t.id} className={styles.metaChip}>{t.name}</span>
             ))}
@@ -381,7 +382,7 @@ export default function ProblemDetailPage() {
               </table>
             ) : (
               <div className="empty-state" style={{ padding: '40px 0' }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{marginBottom:8,color:'var(--text-3)'}}><path d="M22 12H16l-2 3H8l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
                 <div style={{ color: 'var(--text-3)' }}>Посылок пока нет — нажми «Отправить»</div>
               </div>
             )}

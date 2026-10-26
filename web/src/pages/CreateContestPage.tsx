@@ -30,7 +30,7 @@ export default function CreateContestPage() {
 
   useEffect(() => {
     // load all published problems (up to 100)
-    problemsApi.getProblems({ size: 100 })
+    problemsApi.getProblems({ size: 200 })
       .then(r => setProblems(r.data.content))
       .finally(() => setLoadingProblems(false))
   }, [])

@@ -81,9 +81,12 @@ public class ContestController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        contestService.deleteContest(id);
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        boolean isAdmin = principal.getRole() == Role.ADMIN;
+        contestService.deleteContest(id, principal.getId(), isAdmin);
         return ResponseEntity.noContent().build();
     }
 
