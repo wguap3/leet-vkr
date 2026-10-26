@@ -44,6 +44,7 @@ export interface ProblemDetail {
   tags: Tag[]
   codeTemplate: string | null
   publicTestCases: TestCase[]
+  visible: boolean
 }
 
 export interface TestCase {

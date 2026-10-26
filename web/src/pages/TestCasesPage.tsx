@@ -148,11 +148,11 @@ export default function TestCasesPage() {
                   background: tc.isPublic ? '#1a3a1a' : 'var(--surface2)',
                   color: tc.isPublic ? 'var(--green)' : 'var(--muted)'
                 }}>
-                  {tc.isPublic ? '🔓 Публичный' : '🔒 Скрытый'}
+                  {tc.isPublic ? 'Публичный' : 'Скрытый'}
                 </span>
                 {!e && (
                   <>
-                    <button className="btn btn-sm" onClick={() => startEdit(tc)}>✏️ Ред.</button>
+                    <button className="btn btn-sm" onClick={() => startEdit(tc)}>Ред.</button>
                     <button className="btn btn-sm btn-danger" onClick={() => handleDelete(tc)}>🗑</button>
                   </>
                 )}

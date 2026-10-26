@@ -59,10 +59,10 @@ export default function ContestAnalyticsPage() {
         </div>
         <div className={styles.summary}>
           <span className={styles.summaryChip}>
-            👥 {analytics.participants.length} участников
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{verticalAlign:'middle',marginRight:4}}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>{analytics.participants.length} участников
           </span>
           <span className={styles.summaryChip}>
-            📋 {analytics.problems.length} задач
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{verticalAlign:'middle',marginRight:4}}><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M17 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>{analytics.problems.length} задач
           </span>
         </div>
       </div>
@@ -92,7 +92,13 @@ export default function ContestAnalyticsPage() {
                 return (
                   <tr key={participant.userId}>
                     <td className={styles.tdRank}>
-                      {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                      {i < 3 ? (
+                      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                        <circle cx="11" cy="11" r="10" fill={['#f5c842','#c0c0c0','#cd7f32'][i]} opacity="0.2"/>
+                        <circle cx="11" cy="11" r="10" stroke={['#f5c842','#c0c0c0','#cd7f32'][i]} strokeWidth="1.5"/>
+                        <text x="11" y="15" textAnchor="middle" fontSize="10" fontWeight="700" fill={['#f5c842','#c0c0c0','#cd7f32'][i]}>{i+1}</text>
+                      </svg>
+                    ) : `#${i + 1}`}
                     </td>
                     <td>
                       <div className={styles.userCell}>

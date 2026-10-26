@@ -10,7 +10,7 @@ function tierInfo(rating: number) {
   if (rating >= 2000) return { name: 'Мастер',       icon: '👑', color: '#f59e0b' }
   if (rating >= 1500) return { name: 'Эксперт',      icon: '🔥', color: '#8b5cf6' }
   if (rating >= 1000) return { name: 'Продвинутый',  icon: '💫', color: '#3b82f6' }
-  if (rating >= 500)  return { name: 'Участник',     icon: '⚡', color: '#22c55e' }
+  if (rating >= 500)  return { name: 'Участник',     icon: '★', color: '#22c55e' }
   return                     { name: 'Новичок',      icon: '🔰', color: '#71717a' }
 }
 

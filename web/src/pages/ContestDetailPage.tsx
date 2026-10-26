@@ -41,13 +41,13 @@ export default function ContestDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuthStore()
   const canOrganize = user?.role === 'ORGANIZER' || user?.role === 'ADMIN'
-  const isOwnContest = contest?.organizerId != null && user?.id != null && contest.organizerId === user.id
   const [contest, setContest] = useState<ContestDetail | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'problems' | 'leaderboard'>('problems')
   const [registering, setRegistering] = useState(false)
   const [copySuccess, setCopySuccess] = useState(false)
+  const isOwnContest = contest?.organizerId != null && user?.id != null && contest.organizerId === user.id
 
   const countdownTarget = contest?.status === 'RUNNING'
     ? contest.endTime
@@ -117,7 +117,11 @@ export default function ContestDetailPage() {
               {STATUS_LABELS[contest.status]}
             </span>
             <span className={'badge ' + (contest.isPublic ? 'badge-ac' : 'badge-wa')} style={{ fontSize: 11 }}>
-              {contest.isPublic ? '🌐 Публичный' : '🔒 Приватный'}
+              {contest.isPublic ? (
+                <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{verticalAlign:'middle',marginRight:3}}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Публичный</>
+              ) : (
+                <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{verticalAlign:'middle',marginRight:3}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Приватный</>
+              )}
             </span>
             <span style={{ fontSize: 13, color: 'var(--text-2)' }}>
               {new Date(contest.startTime).toLocaleString('ru-RU')} — {new Date(contest.endTime).toLocaleString('ru-RU')}

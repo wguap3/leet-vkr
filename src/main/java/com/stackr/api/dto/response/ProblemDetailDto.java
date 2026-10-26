@@ -14,5 +14,6 @@ public record ProblemDetailDto(
         Integer memoryLimitMb,
         Set<TagDto> tags,
         String codeTemplate,
-        List<TestCaseDto> publicTestCases
+        List<TestCaseDto> publicTestCases,
+        boolean visible
 ) {}

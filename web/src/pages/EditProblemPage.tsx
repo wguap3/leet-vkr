@@ -70,6 +70,7 @@ export default function EditProblemPage() {
       setMemoryLimit(p.memoryLimitMb)
       setCodeTemplate(p.codeTemplate ?? '')
       setSelectedTags(p.tags.map(t => t.id))
+      setVisible(p.visible ?? true)
 
       const tcStates: TCState[] = tcs.map(tc => ({
         id: tc.id,

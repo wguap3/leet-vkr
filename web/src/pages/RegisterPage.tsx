@@ -66,7 +66,7 @@ export default function RegisterPage() {
             className={`${styles.roleBtn} ${role === 'CONTESTANT' ? styles.roleActive : ''}`}
             onClick={() => setRole('CONTESTANT')}
           >
-            <span className={styles.roleIcon}>🏆</span>
+            <svg className={styles.roleIcon} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
             <span className={styles.roleLabel}>Участник</span>
             <span className={styles.roleDesc}>Решаю задачи и контесты</span>
           </button>
@@ -75,7 +75,7 @@ export default function RegisterPage() {
             className={`${styles.roleBtn} ${role === 'ORGANIZER' ? styles.roleActive : ''}`}
             onClick={() => setRole('ORGANIZER')}
           >
-            <span className={styles.roleIcon}>🎯</span>
+            <svg className={styles.roleIcon} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
             <span className={styles.roleLabel}>Организатор</span>
             <span className={styles.roleDesc}>Создаю контесты</span>
           </button>

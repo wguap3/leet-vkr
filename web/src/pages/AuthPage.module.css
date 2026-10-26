@@ -34,6 +34,6 @@
 }
 .roleBtn:hover { border-color: var(--violet); }
 .roleActive { border-color: var(--violet) !important; background: rgba(139,92,246,.12) !important; }
-.roleIcon { font-size: 22px; line-height: 1; }
+.roleIcon { width: 22px; height: 22px; flex-shrink: 0; color: var(--violet); }
 .roleLabel { font-size: 13px; font-weight: 600; color: var(--text-1); }
 .roleDesc { font-size: 11px; color: var(--text-4); }

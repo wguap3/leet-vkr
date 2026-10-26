@@ -187,7 +187,7 @@ public class ProblemService {
                 .map(t -> new TagDto(t.getId(), t.getName()))
                 .collect(Collectors.toSet());
         return new ProblemDetailDto(p.getId(), p.getTitle(), p.getDescription(), p.getDifficulty(),
-                p.getTimeLimitMs(), p.getMemoryLimitMb(), tags, p.getCodeTemplate(), publicTests);
+                p.getTimeLimitMs(), p.getMemoryLimitMb(), tags, p.getCodeTemplate(), publicTests, p.isVisible());
     }
 
     private TestCaseDto toTestCaseDto(com.stackr.api.entity.TestCase tc) {

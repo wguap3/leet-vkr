@@ -166,7 +166,7 @@ export default function ContestInvitePage() {
             onClick={handleJoin}
             disabled={joining}
           >
-            {joining ? <span className="spinner" /> : '🎯 Зарегистрироваться и войти'}
+            {joining ? <span className="spinner" /> : 'Зарегистрироваться и войти'}
           </button>
         )}
 

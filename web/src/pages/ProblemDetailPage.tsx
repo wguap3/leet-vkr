@@ -201,7 +201,7 @@ export default function ProblemDetailPage() {
           <h2>{problem.title}</h2>
           <div className={styles.meta}>
             <span className={`badge badge-${problem.difficulty.toLowerCase()}`}>{DIFF_LABELS[problem.difficulty]}</span>
-            <span className={styles.metaChip}>⏱ {problem.timeLimitMs} мс</span>
+            <span className={styles.metaChip}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{verticalAlign:'middle',marginRight:3}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>{problem.timeLimitMs} мс</span>
             <span className={styles.metaChip}>💾 {problem.memoryLimitMb} МБ</span>
             {Array.from(problem.tags).map(t => (
               <span key={t.id} className={styles.metaChip}>{t.name}</span>
@@ -213,13 +213,13 @@ export default function ProblemDetailPage() {
                 to={`/problems/${pid}/edit`}
                 className="btn btn-outline btn-sm"
               >
-                ✏️ Редактировать
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{verticalAlign:'middle',marginRight:4}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Редактировать
               </Link>
               <Link
                 to={`/problems/${pid}/testcases`}
                 style={{ fontSize: '0.85rem', color: 'var(--accent)', textDecoration: 'none' }}
               >
-                ⚙ Управление тест-кейсами
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{verticalAlign:'middle',marginRight:4}}><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M20 12h2M2 12h2M12 20v2M12 2v2"/></svg>Тест-кейсы
               </Link>
             </div>
           )}
@@ -264,7 +264,7 @@ export default function ProblemDetailPage() {
               <div className="empty-state"><span className="spinner" /></div>
             ) : hints.length === 0 ? (
               <div className="empty-state" style={{ padding: '40px 0' }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>🔒</div>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{marginBottom:8,color:'var(--text-3)'}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 <div>Подсказок нет</div>
               </div>
             ) : (
