@@ -155,9 +155,33 @@ public class ProblemService {
     public void deleteProblem(Long id, Long userId) {
         var problem = findOrThrow(id);
         checkOwnership(problem, userId, "delete");
-        if (submissionRepository.existsByProblemId(id) || contestRepository.containsProblem(id)) {
-            throw new com.stackr.api.exception.ConflictException("Задача используется в посылках или контестах. Снимите её с публикации, чтобы сохранить историю.");
+        if (submissionRepository.existsByProblemId(id)) {
+            throw new com.stackr.api.exception.ConflictException("Задача используется в посылках. Удаление изменит историю решений. "
+                    + (problem.isVisible() ? "Можно снять её с публикации." : "Задача уже скрыта из каталога."));
         }
+        var contests = contestRepository.findContainingProblem(id);
+        boolean admin = userRepository.findById(userId).map(u -> u.getRole() == Role.ADMIN).orElse(false);
+        var now = java.time.LocalDateTime.now();
+        for (var contest : contests) {
+            boolean own = admin || contest.getOrganizer().getId().equals(userId);
+            if (!own) {
+                throw new com.stackr.api.exception.ConflictException("Задача используется в контесте другого организатора. "
+                        + "Его организатор должен убрать её из набора задач."
+                        + (problem.isVisible() ? " Можно снять задачу с публикации." : " Задача уже скрыта из каталога."));
+            }
+            if (now.isBefore(contest.getEndTime()) || submissionRepository.existsByContestId(contest.getId())) {
+                throw new com.stackr.api.exception.ConflictException("Задача используется в контесте «" + contest.getTitle()
+                        + "» (№" + contest.getId() + "). "
+                        + (now.isBefore(contest.getEndTime())
+                        ? "Сначала уберите её из набора задач контеста." : "У контеста есть посылки: состав задач сохраняется для истории.")
+                        + (problem.isVisible() ? " Можно снять задачу с публикации." : " Задача уже скрыта из каталога."));
+            }
+        }
+        for (var contest : contests) {
+            contest.getProblems().removeIf(p -> p.getId().equals(id));
+            contestRepository.save(contest);
+        }
+        if (!contests.isEmpty()) contestRepository.flush();
         problemRepository.deleteById(id);
     }
 

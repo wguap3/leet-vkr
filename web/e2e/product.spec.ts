@@ -298,3 +298,20 @@ test('task with history cannot be deleted and can be unpublished instead', async
   const result = await request.get(`/api/problems/${data.problem.id}`, { headers: auth('org') })
   expect(result.status()).toBe(200); expect((await result.json()).visible).toBe(false)
 })
+test('own task can be removed from an ended contest without submissions', async ({ page, request }) => {
+  const title = data.stamp + ' Завершённый без посылок'
+  const p = await (await request.post('/api/problems', { headers: auth('org'), data: { title, description: 'Удаляемая задача', difficulty: 'EASY', timeLimitMs: 1000, memoryLimitMb: 256 } })).json()
+  const response = await request.post('/api/contests', { headers: auth('org'), data: {
+    title: data.stamp + ' Пустой архив', description: '', isPublic: false, problemIds: [p.id],
+    startTime: new Date(Date.now()-7200000).toISOString(), endTime: new Date(Date.now()-3600000).toISOString(),
+  } })
+  expect(response.status()).toBe(201); const contest = await response.json()
+  await login(page, 'org'); await page.goto('/problems?mine=true')
+  await page.getByLabel('Поиск', { exact: true }).fill(title)
+  await page.getByRole('button', { name: `Удалить ${title}`, exact: true }).click()
+  await page.getByRole('button', { name: 'Подтвердить удаление', exact: true }).click()
+  await expect(page.getByText('Задача удалена', { exact: true })).toBeVisible()
+  expect((await request.get(`/api/problems/${p.id}`, { headers: auth('org') })).status()).toBe(404)
+  const archived = await request.get(`/api/contests/${contest.id}`, { headers: auth('org') })
+  expect(archived.status()).toBe(200); expect((await archived.json()).problems).toHaveLength(0)
+})

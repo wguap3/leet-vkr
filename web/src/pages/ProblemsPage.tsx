@@ -31,6 +31,7 @@ export default function ProblemsPage() {
   }, [deleting])
   const [busy, setBusy] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+  const [blocked, setBlocked] = useState(false)
   const [canHide, setCanHide] = useState(false)
   const [retry, setRetry] = useState(0)
   useEffect(() => { setTagId(params.get('tagId') || ''); setPage(0) }, [params])
@@ -48,7 +49,7 @@ export default function ProblemsPage() {
   }, [difficulty, tagId, solved, mine, search, page, retry])
   const remove = async (hide = false) => {
     if (!deleting) return
-    setBusy(true); setDeleteError('')
+    setBusy(true); setDeleteError(''); setBlocked(false)
     try {
       if (hide) await problemsApi.setVisible(deleting.id, false)
       else await problemsApi.deleteProblem(deleting.id)
@@ -57,6 +58,7 @@ export default function ProblemsPage() {
       if (!hide && problems.length === 1 && page > 0) setPage(n => n - 1)
       else setRetry(n => n + 1)
     } catch (err: any) {
+      setBlocked(err.response?.status === 409)
       setCanHide(err.response?.status === 409 && !!deleting.visible)
       setDeleteError(err.response?.data?.message || 'Не удалось удалить задачу. Попробуйте снова.')
     } finally { setBusy(false) }
@@ -82,11 +84,11 @@ export default function ProblemsPage() {
     </div>
     {mine && deleting && <section ref={deletePanel} tabIndex={-1} className="card" aria-label="Подтверждение удаления задачи" style={{ padding:20, marginBottom:20 }}>
       <h2 style={{ fontSize:18 }}>Удалить «{deleting.title}»?</h2>
-      <p className="page-description">Условие, тесты и подсказки будут удалены без возможности восстановления. Задачи с посылками или участием в контестах защищены от удаления.</p>
+      <p className="page-description">Условие, тесты и подсказки будут удалены без возможности восстановления. Задачи с посылками защищены от удаления. Из ваших завершённых контестов без посылок задача будет убрана автоматически.</p>
       {deleteError && <p role="alert" style={{ color:'var(--red)', marginTop:12 }}>{deleteError}</p>}
       <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginTop:16 }}>
-        <button className="btn btn-outline" disabled={busy} onClick={() => { setDeleting(null); setDeleteError(''); setCanHide(false) }}>Отмена</button>
-        {canHide ? <button className="btn btn-primary" disabled={busy} onClick={() => remove(true)}>Снять с публикации</button> :
+        <button className="btn btn-outline" disabled={busy} onClick={() => { setDeleting(null); setDeleteError(''); setCanHide(false); setBlocked(false) }}>Отмена</button>
+        {canHide ? <button className="btn btn-primary" disabled={busy} onClick={() => remove(true)}>Снять с публикации</button> : !blocked &&
           <button className="btn btn-primary" disabled={busy} onClick={() => remove()}>{busy ? 'Удаляем…' : 'Подтвердить удаление'}</button>}
       </div>
     </section>}
@@ -99,7 +101,7 @@ export default function ProblemsPage() {
         <td><span className={`badge badge-${p.difficulty.toLowerCase()}`}>{levels[p.difficulty]}</span></td>
         <td><div className={styles.tags}>{p.tags.slice(0, 3).map(t => <span className={styles.tag} key={t.id}>{t.name}</span>)}</div></td>
         <td className="muted">{p.solvedCount}</td><td>{mine ? <span className={`badge ${p.visible ? 'badge-ac' : 'badge-pending'}`}>{p.visible ? 'Опубликована' : 'Черновик'}</span> : p.userVerdict === 'AC' ? <span className="badge badge-ac">✓ Решена</span> : <span className="muted">Не решена</span>}</td>
-        {mine && <td><div style={{ display:'flex', gap:8 }}><Link className="btn btn-outline btn-sm" to={`/problems/${p.id}/edit`}>Изменить</Link><button className="btn btn-outline btn-sm" aria-label={`Удалить ${p.title}`} disabled={busy} onClick={() => { setDeleting(p); setDeleteError(''); setCanHide(false) }}>Удалить</button></div></td>}
+        {mine && <td><div style={{ display:'flex', gap:8 }}><Link className="btn btn-outline btn-sm" to={`/problems/${p.id}/edit`}>Изменить</Link><button className="btn btn-outline btn-sm" aria-label={`Удалить ${p.title}`} disabled={busy} onClick={() => { setDeleting(p); setDeleteError(''); setCanHide(false); setBlocked(false) }}>Удалить</button></div></td>}
       </tr>)}</tbody></table>}
     </div>
     {totalPages > 1 && <div className={styles.pagination}><button className="btn btn-outline" disabled={page === 0} onClick={() => setPage(n => n - 1)}>← Назад</button><span className="muted">{page + 1} / {totalPages}</span><button className="btn btn-outline" disabled={page >= totalPages - 1} onClick={() => setPage(n => n + 1)}>Далее →</button></div>}
