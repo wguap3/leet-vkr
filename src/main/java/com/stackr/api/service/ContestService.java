@@ -40,10 +40,11 @@ public class ContestService {
     @Transactional(readOnly = true)
     public List<ContestShortDto> getContests(ContestStatus status, Long userId, boolean isOrganizerOrAdmin, boolean mine) {
         boolean admin = userId != null && userRepository.findById(userId).map(u -> u.getRole() == Role.ADMIN).orElse(false);
-        var now = java.time.LocalDateTime.now();
+        Set<Long> joined = mine && userId != null
+                ? new HashSet<>(participationRepository.findContestIdsByUserId(userId)) : Set.of();
         var contests = contestRepository.findAccessible(null, userId, admin).stream()
                 .filter(c -> effectiveStatus(c) != ContestStatus.FINISHED)
-                .filter(c -> mine ? c.getOrganizer().getId().equals(userId) : c.isPublic())
+                .filter(c -> mine ? (c.getOrganizer().getId().equals(userId) || joined.contains(c.getId())) : c.isPublic())
                 .filter(c -> status == null || effectiveStatus(c) == status).toList();
         if (contests.isEmpty()) return List.of();
 

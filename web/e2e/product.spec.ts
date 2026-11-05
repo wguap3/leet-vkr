@@ -80,10 +80,15 @@ test('contest registers participant, preserves context and updates standings', a
   await page.goto(`/contests/${data.active.id}/standings`); await expect(page.getByRole('link', { name: user.student.name, exact: true })).toBeVisible()
   await page.screenshot({ path: 'test-results/screenshots/standings.png', fullPage: true })
 })
-test('private invitation joins contest without exposing it in public list', async ({ page }) => {
+test('private invitation joins contest without exposing it in public list', async ({ page, request }) => {
   await login(page); await page.goto(`/contests/invite/${data.private.inviteToken}`)
   await page.getByRole('button', { name: /Принять|Присоединиться|Участвовать|Зарегистрироваться/ }).click()
   await page.goto('/contests'); await expect(page.getByRole('heading', { name: data.private.title, exact: true })).not.toBeVisible()
+  await page.getByRole('button', { name: 'Мои контесты', exact: true }).click()
+  await expect(page.getByRole('heading', { name: data.private.title, exact: true })).toBeVisible()
+  const others = await (await request.get('/api/contests?mine=true', { headers: auth('otherorg') })).json()
+  expect(others.some((c: any) => c.id === data.private.id)).toBe(false)
+
   await page.goto(`/contests/${data.private.id}`); await expect(page.getByRole('heading', { name: data.private.title, exact: true })).toBeVisible()
 })
 test('password change rejects old login and permits new login', async ({ page, request }) => {

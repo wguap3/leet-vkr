@@ -49,14 +49,14 @@ export default function ContestsPage() {
   return (
     <div className="page-container">
       <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div><h1>Контесты</h1><p className="page-description">Практикуйтесь в открытых соревнованиях. В приватный контест можно вступить по ссылке организатора.</p></div>
+        <div><h1>Контесты</h1><p className="page-description">{mine ? (canOrganize ? 'Ваши созданные контесты и соревнования, в которых вы участвуете.' : 'Контесты, в которых вы зарегистрированы. Приватные видны здесь только вам и их организатору.') : 'Открытые соревнования для всех. В приватный контест можно вступить по ссылке организатора.'}</p></div>
         <select value={status} onChange={e => setStatus(e.target.value as any)}>
           <option value="">Все доступные</option>
           {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
       </div>
 
-      {canOrganize && <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+      {<div style={{ display:'flex', gap:8, marginBottom:20 }}>
         <button className={`btn ${!mine ? 'btn-primary' : 'btn-outline'}`} onClick={() => setMine(false)}>Открытые контесты</button>
         <button className={`btn ${mine ? 'btn-primary' : 'btn-outline'}`} onClick={() => setMine(true)}>Мои контесты</button>
       </div>}

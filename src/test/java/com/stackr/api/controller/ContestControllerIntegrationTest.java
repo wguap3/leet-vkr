@@ -70,10 +70,14 @@ class ContestControllerIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(get("/api/contests?mine=true").header("Authorization", bearer(organizerToken)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2));
         mockMvc.perform(get("/api/contests/"+secret.getId()).header("Authorization", bearer(contestantToken))).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/contests?mine=true").header("Authorization", bearer(contestantToken)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
         mockMvc.perform(post("/api/contests/invite/private-only/join").header("Authorization", bearer(contestantToken))).andExpect(status().isOk());
         mockMvc.perform(get("/api/contests").header("Authorization", bearer(contestantToken)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
         mockMvc.perform(get("/api/contests/"+secret.getId()).header("Authorization", bearer(contestantToken))).andExpect(status().isOk());
+        mockMvc.perform(get("/api/contests?mine=true").header("Authorization", bearer(contestantToken)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(secret.getId()));
     }
 
     // ── GET /api/contests ─────────────────────────────────────────────────────
