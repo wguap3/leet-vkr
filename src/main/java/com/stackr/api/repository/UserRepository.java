@@ -20,5 +20,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
     Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(String username, String email, Pageable pageable);
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.active = true ORDER BY u.rating DESC, u.id ASC")
     Page<User> findAllByOrderByRatingDesc(Pageable pageable);
 }

@@ -1,0 +1,2272 @@
+[
+  {
+    "slug": "algorithm-01",
+    "title": "Максимальная сумма подмассива",
+    "difficulty": "MEDIUM",
+    "tag": "Массивы",
+    "description": "## Условие\n\nНайдите максимальную сумму непустого непрерывного подмассива.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n9\n-2 1 -3 4 -1 2 1 -5 4\n```\nВывод:\n```text\n6\n```\n",
+    "tests": [
+      {
+        "inputData": "9\n-2 1 -3 4 -1 2 1 -5 4\n",
+        "expectedOutput": "6",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "0",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "6",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "6",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "4\n3 2 3 -2\n",
+        "expectedOutput": "8",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "11\n-3 0 1 2 -2 0 3 -1 -2 2 2\n",
+        "expectedOutput": "5",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "9\n1 3 -1 -2 -2 -3 -1 -1 -1\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "2\n0 3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "3\n0 1 -2\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "9\n-2 3 1 0 -3 0 -1 1 3\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "8\n-3 3 2 1 2 2 3 1\n",
+        "expectedOutput": "14",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "9\n2 -3 0 0 0 1 -1 3 1\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();long best=a[0],cur=a[0];for(int i=1;i<n;i++){cur=Math.max(a[i],cur+a[i]);best=Math.max(best,cur);}System.out.println(best);}}"
+  },
+  {
+    "slug": "algorithm-02",
+    "title": "Одна сделка на бирже",
+    "difficulty": "EASY",
+    "tag": "Массивы",
+    "description": "## Условие\n\na[i] — цена акции в день i. Разрешено купить один раз и продать в более поздний день. Выведите максимальную прибыль или 0, если выгодной сделки нет.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n6\n7 1 5 3 6 4\n```\nВывод:\n```text\n5\n```\n",
+    "tests": [
+      {
+        "inputData": "6\n7 1 5 3 6 4\n",
+        "expectedOutput": "5",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "0",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "5",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "4\n-2 -3 3 -2\n",
+        "expectedOutput": "6",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "2\n2 1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "10\n3 3 -3 2 2 3 -2 1 -3 3\n",
+        "expectedOutput": "6",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "8\n-1 3 0 -3 -2 0 1 2\n",
+        "expectedOutput": "5",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "6\n1 3 2 -1 -1 1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "12\n3 3 -1 0 -1 2 2 -3 2 3 1 1\n",
+        "expectedOutput": "6",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "5\n-3 -3 0 -3 -2\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "4\n-3 1 -1 0\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();long low=a[0],best=0;for(long x:a){best=Math.max(best,x-low);low=Math.min(low,x);}System.out.println(best);}}"
+  },
+  {
+    "slug": "algorithm-03",
+    "title": "Произведение остальных",
+    "difficulty": "MEDIUM",
+    "tag": "Префиксные суммы",
+    "description": "## Условие\n\nДля каждой позиции выведите произведение всех остальных элементов. Деление использовать нельзя. Произведение пустого набора равно 1.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 12\n- −3 ≤ a[i] ≤ 3\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n4\n1 2 3 4\n```\nВывод:\n```text\n24 12 8 6\n```\n",
+    "tests": [
+      {
+        "inputData": "4\n1 2 3 4\n",
+        "expectedOutput": "24 12 8 6",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "1",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "1 1 1",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "2 3 6",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "0 0 0",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "0 0 0 0 0",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "6 3 2",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "0 -1 0",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "-12 -12 18 18",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "7\n-2 0 -1 -3 3 -3 -2\n",
+        "expectedOutput": "0 -108 0 0 0 0 0",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "12\n-1 -3 -3 0 -3 3 -1 0 0 2 1 -1\n",
+        "expectedOutput": "0 0 0 0 0 0 0 0 0 0 0 0",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "3\n2 3 2\n",
+        "expectedOutput": "6 4 6",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "5\n0 0 1 -3 -3\n",
+        "expectedOutput": "0 0 0 0 0",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "12\n-2 1 1 -1 3 -2 3 2 3 0 3 -1\n",
+        "expectedOutput": "0 0 0 0 0 0 0 0 0 648 0 0",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "10\n2 -1 0 -1 -1 2 0 0 0 2\n",
+        "expectedOutput": "0 0 0 0 0 0 0 0 0 0",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "5\n-1 2 -1 -3 -3\n",
+        "expectedOutput": "-18 9 -18 -6 -6",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "2\n3 1\n",
+        "expectedOutput": "1 3",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();long[] b=new long[n];long p=1;for(int i=0;i<n;i++){b[i]=p;p*=a[i];}p=1;for(int i=n-1;i>=0;i--){b[i]*=p;p*=a[i];}for(long x:b)System.out.print(x+\" \");}}"
+  },
+  {
+    "slug": "algorithm-04",
+    "title": "Перенос нулей",
+    "difficulty": "EASY",
+    "tag": "Два указателя",
+    "description": "## Условие\n\nПереместите все нули в конец, сохранив порядок ненулевых элементов. Выведите полученный массив.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n5\n0 1 0 3 12\n```\nВывод:\n```text\n1 3 12 0 0\n```\n",
+    "tests": [
+      {
+        "inputData": "5\n0 1 0 3 12\n",
+        "expectedOutput": "1 3 12 0 0",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "0",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "1 1 1",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "3 2 1",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "0 0 0",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "1 2 3 0 0",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "-1 -2 -3",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "-1 1 0",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "-3 -3 2 2",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "4\n0 1 3 1\n",
+        "expectedOutput": "1 3 1 0",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "10\n3 -1 1 2 0 3 1 1 0 3\n",
+        "expectedOutput": "3 -1 1 2 3 1 1 3 0 0",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "7\n-3 2 -2 1 1 -1 2\n",
+        "expectedOutput": "-3 2 -2 1 1 -1 2",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "10\n-1 3 -1 2 3 -2 -3 -1 1 3\n",
+        "expectedOutput": "-1 3 -1 2 3 -2 -3 -1 1 3",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "5\n2 -1 1 -2 2\n",
+        "expectedOutput": "2 -1 1 -2 2",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "12\n-3 3 -3 1 0 -2 -2 -1 -3 0 -3 1\n",
+        "expectedOutput": "-3 3 -3 1 -2 -2 -1 -3 -3 1 0 0",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "9\n-2 3 -2 -1 -1 -1 -1 -1 0\n",
+        "expectedOutput": "-2 3 -2 -1 -1 -1 -1 -1 0",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "6\n-1 0 3 0 -3 1\n",
+        "expectedOutput": "-1 3 -3 1 0 0",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();int j=0;for(long x:a)if(x!=0)a[j++]=x;while(j<n)a[j++]=0;for(long x:a)System.out.print(x+\" \");}}"
+  },
+  {
+    "slug": "algorithm-05",
+    "title": "Уникальные числа",
+    "difficulty": "EASY",
+    "tag": "Хеш-таблицы",
+    "description": "## Условие\n\nВыведите различные элементы массива в порядке возрастания.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n5\n4 2 4 1 2\n```\nВывод:\n```text\n1 2 4\n```\n",
+    "tests": [
+      {
+        "inputData": "5\n4 2 4 1 2\n",
+        "expectedOutput": "1 2 4",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "0",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "1 2 3",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "0 1 2 3",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "-3 -2 -1",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "-1 0 1",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "-3 2",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "6\n-2 -1 1 1 2 -1\n",
+        "expectedOutput": "-2 -1 1 2",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "10\n0 -2 0 1 -3 1 0 2 2 1\n",
+        "expectedOutput": "-3 -2 0 1 2",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "4\n-1 -2 3 1\n",
+        "expectedOutput": "-2 -1 1 3",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "6\n3 0 0 2 0 3\n",
+        "expectedOutput": "0 2 3",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "6\n0 0 -2 -1 1 2\n",
+        "expectedOutput": "-2 -1 0 1 2",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "6\n-1 -2 -1 -2 2 1\n",
+        "expectedOutput": "-2 -1 1 2",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "5\n-2 3 -2 -2 3\n",
+        "expectedOutput": "-2 3",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "11\n1 1 -2 3 3 3 1 3 0 3 -3\n",
+        "expectedOutput": "-3 -2 0 1 3",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();TreeSet<Long> set=new TreeSet<>();for(long x:a)set.add(x);for(long x:set)System.out.print(x+\" \");}}"
+  },
+  {
+    "slug": "algorithm-06",
+    "title": "Самая длинная последовательность",
+    "difficulty": "MEDIUM",
+    "tag": "Хеш-таблицы",
+    "description": "## Условие\n\nНайдите длину самой длинной последовательности различных последовательных целых чисел среди элементов массива. Исходный порядок не важен.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n6\n100 4 200 1 3 2\n```\nВывод:\n```text\n4\n```\n",
+    "tests": [
+      {
+        "inputData": "6\n100 4 200 1 3 2\n",
+        "expectedOutput": "4",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "1",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "4\n2 2 -1 -3\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "5\n-1 1 -2 0 -1\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "3\n2 1 -3\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "4\n-2 -3 1 -3\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "3\n-1 -3 3\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "9\n-3 0 -3 0 -1 1 2 1 -2\n",
+        "expectedOutput": "6",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "4\n3 3 1 -2\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "11\n0 2 -1 3 -1 0 3 -2 2 0 0\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();Set<Long> set=new HashSet<>();for(long x:a)set.add(x);int best=0;for(long x:set)if(!set.contains(x-1)){long y=x;while(set.contains(y))y++;best=Math.max(best,(int)(y-x));}System.out.println(best);}}"
+  },
+  {
+    "slug": "algorithm-07",
+    "title": "Первое пропущенное положительное",
+    "difficulty": "HARD",
+    "tag": "Массивы",
+    "description": "## Условие\n\nНайдите наименьшее положительное целое число, которого нет в массиве. Целевая сложность: O(n) времени и O(1) дополнительной памяти.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n4\n3 4 -1 1\n```\nВывод:\n```text\n2\n```\n",
+    "tests": [
+      {
+        "inputData": "4\n3 4 -1 1\n",
+        "expectedOutput": "2",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "1",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "5\n-3 -1 -2 3 3\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "12\n1 1 -3 2 0 0 1 -2 1 -2 -2 -2\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "10\n2 3 0 0 -2 1 2 2 -3 -1\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "7\n-1 1 3 -3 -2 -2 3\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "5\n2 1 2 1 -3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "4\n-1 3 0 -2\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "9\n-3 1 -2 3 1 0 3 2 2\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "7\n3 2 -2 2 1 -2 0\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();for(int i=0;i<n;i++)while(a[i]>=1&&a[i]<=n&&a[(int)a[i]-1]!=a[i]){int j=(int)a[i]-1;long t=a[j];a[j]=a[i];a[i]=t;}int ans=n+1;for(int i=0;i<n;i++)if(a[i]!=i+1){ans=i+1;break;}System.out.println(ans);}}"
+  },
+  {
+    "slug": "algorithm-08",
+    "title": "Следующий больший элемент",
+    "difficulty": "MEDIUM",
+    "tag": "Стек",
+    "description": "## Условие\n\nДля каждой позиции найдите первый строго больший элемент справа. Если его нет, выведите -1.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n5\n2 1 2 4 3\n```\nВывод:\n```text\n4 2 4 -1 -1\n```\n",
+    "tests": [
+      {
+        "inputData": "5\n2 1 2 4 3\n",
+        "expectedOutput": "4 2 4 -1 -1",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "-1",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "-1 -1 -1",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "-1 -1 -1",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "-1 -1 -1",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "2 2 3 3 -1",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "-1 -1 -1",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "0 1 -1",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "2 2 -1 -1",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "5\n-3 -1 3 1 -3\n",
+        "expectedOutput": "-1 3 -1 -1 -1",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "8\n-2 -1 -3 2 1 1 3 -3\n",
+        "expectedOutput": "-1 2 2 3 3 3 -1 -1",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "5\n3 0 -2 0 0\n",
+        "expectedOutput": "-1 -1 0 -1 -1",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "6\n0 1 1 -2 0 0\n",
+        "expectedOutput": "1 -1 -1 0 -1 -1",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "4\n1 -3 1 -2\n",
+        "expectedOutput": "-1 1 -1 -1",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "11\n-3 1 3 -1 -3 0 2 -2 -3 -2 2\n",
+        "expectedOutput": "1 3 -1 0 0 2 -1 2 -2 2 -1",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "9\n3 1 -2 1 3 1 -2 -2 -3\n",
+        "expectedOutput": "-1 3 1 3 -1 -1 -1 -1 -1",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "9\n-1 0 3 2 -2 -3 -2 -2 -1\n",
+        "expectedOutput": "0 3 -1 -1 -1 -2 -1 -1 -1",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();long[] b=new long[n];Deque<Long> st=new ArrayDeque<>();for(int i=n-1;i>=0;i--){while(!st.isEmpty()&&st.peek()<=a[i])st.pop();b[i]=st.isEmpty()?-1:st.peek();st.push(a[i]);}for(long x:b)System.out.print(x+\" \");}}"
+  },
+  {
+    "slug": "algorithm-09",
+    "title": "Ожидание тёплого дня",
+    "difficulty": "MEDIUM",
+    "tag": "Стек",
+    "description": "## Условие\n\na[i] — температура в день i. Для каждого дня выведите количество дней до первой строго большей температуры. Если такого дня нет, выведите 0.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n8\n73 74 75 71 69 72 76 73\n```\nВывод:\n```text\n1 1 4 2 1 1 0 0\n```\n",
+    "tests": [
+      {
+        "inputData": "8\n73 74 75 71 69 72 76 73\n",
+        "expectedOutput": "1 1 4 2 1 1 0 0",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "0",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "0 0 0",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "0 0 0",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "0 0 0",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "2 1 2 1 0",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "0 0 0",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "1 1 0",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "2 1 0 0",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "5\n-2 -3 0 2 0\n",
+        "expectedOutput": "2 1 1 0 0",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "4\n-2 0 -2 2\n",
+        "expectedOutput": "1 2 1 0",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "9\n-2 3 -2 -3 3 3 -3 -3 3\n",
+        "expectedOutput": "1 0 2 1 0 0 2 1 0",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "10\n2 2 0 2 3 -2 1 -2 2 -3\n",
+        "expectedOutput": "4 3 1 1 0 1 2 1 0 0",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "4\n-3 3 2 2\n",
+        "expectedOutput": "1 0 0 0",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "6\n-2 -3 0 3 0 0\n",
+        "expectedOutput": "2 1 1 0 0 0",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "12\n0 -2 2 1 -3 1 2 2 2 2 -1 3\n",
+        "expectedOutput": "2 1 9 3 1 1 5 4 3 2 1 0",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "10\n2 3 0 -3 -2 2 0 -3 3 1\n",
+        "expectedOutput": "1 0 3 1 1 3 2 1 0 0",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();int[] b=new int[n];Deque<Integer> st=new ArrayDeque<>();for(int i=0;i<n;i++){while(!st.isEmpty()&&a[st.peek()]<a[i]){int j=st.pop();b[j]=i-j;}st.push(i);}for(int x:b)System.out.print(x+\" \");}}"
+  },
+  {
+    "slug": "algorithm-10",
+    "title": "Вода между стенами",
+    "difficulty": "HARD",
+    "tag": "Два указателя",
+    "description": "## Условие\n\na[i] — высота стены шириной 1. После дождя вода удерживается между стенами. Найдите суммарный объём удержанной воды.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- 0 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n12\n0 1 0 2 1 0 1 3 2 1 2 1\n```\nВывод:\n```text\n6\n```\n",
+    "tests": [
+      {
+        "inputData": "12\n0 1 0 2 1 0 1 3 2 1 2 1\n",
+        "expectedOutput": "6",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "0",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "12\n0 2 3 3 0 0 3 3 1 1 3 1\n",
+        "expectedOutput": "10",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "11\n0 0 3 3 2 0 1 2 3 3 0\n",
+        "expectedOutput": "7",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "9\n3 2 1 0 3 0 2 1 2\n",
+        "expectedOutput": "9",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "5\n1 3 1 1 1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "8\n1 2 3 3 3 2 2 1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "12\n1 1 3 2 0 0 0 0 3 2 3 1\n",
+        "expectedOutput": "14",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "11\n2 3 2 0 2 0 2 2 0 1 3\n",
+        "expectedOutput": "15",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "3\n0 3 2\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 14
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();int l=0,r=n-1;long lm=0,rm=0,v=0;while(l<=r){if(lm<=rm){lm=Math.max(lm,a[l]);v+=lm-a[l++];}else{rm=Math.max(rm,a[r]);v+=rm-a[r--];}}System.out.println(v);}}"
+  },
+  {
+    "slug": "algorithm-11",
+    "title": "Контейнер наибольшей площади",
+    "difficulty": "MEDIUM",
+    "tag": "Два указателя",
+    "description": "## Условие\n\nВыберите два столбца: объём контейнера равен расстоянию между их индексами, умноженному на меньшую высоту. Найдите максимум. При n=1 ответ 0.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- 0 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n9\n1 8 6 2 5 4 8 3 7\n```\nВывод:\n```text\n49\n```\n",
+    "tests": [
+      {
+        "inputData": "9\n1 8 6 2 5 4 8 3 7\n",
+        "expectedOutput": "49",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "0",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "10\n2 3 1 1 3 0 3 3 1 1\n",
+        "expectedOutput": "18",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "11\n0 1 0 1 3 2 1 3 0 2 1\n",
+        "expectedOutput": "10",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "11\n2 2 1 0 1 2 2 3 3 2 2\n",
+        "expectedOutput": "20",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "3\n0 1 0\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "11\n2 3 2 2 1 3 1 2 3 3 1\n",
+        "expectedOutput": "24",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "4\n2 3 3 3\n",
+        "expectedOutput": "6",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "5\n0 0 2 2 3\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "4\n1 3 1 1\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 14
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();int l=0,r=n-1;long best=0;while(l<r){best=Math.max(best,(r-l)*Math.min(a[l],a[r]));if(a[l]<a[r])l++;else r--;}System.out.println(best);}}"
+  },
+  {
+    "slug": "algorithm-12",
+    "title": "Дома вдоль улицы",
+    "difficulty": "MEDIUM",
+    "tag": "Динамическое программирование",
+    "description": "## Условие\n\na[i] — награда за посещение дома i. Нельзя посещать соседние дома. Найдите максимальную суммарную награду. Разрешено не выбирать ни одного дома.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- 0 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n5\n2 7 9 3 1\n```\nВывод:\n```text\n12\n```\n",
+    "tests": [
+      {
+        "inputData": "5\n2 7 9 3 1\n",
+        "expectedOutput": "12",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "0",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "6",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "4\n1 1 1 0\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "8\n2 3 2 3 1 0 1 3\n",
+        "expectedOutput": "9",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "7\n2 2 0 1 0 0 0\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "9\n1 1 0 3 3 3 1 2 2\n",
+        "expectedOutput": "9",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "10\n3 1 1 1 0 0 1 1 0 2\n",
+        "expectedOutput": "7",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "10\n3 1 3 3 3 3 3 2 1 1\n",
+        "expectedOutput": "13",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "8\n0 2 1 2 0 3 2 1\n",
+        "expectedOutput": "8",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "12\n3 0 1 2 0 3 0 2 2 3 1 3\n",
+        "expectedOutput": "16",
+        "isPublic": false,
+        "orderIndex": 14
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();long prev=0,cur=0;for(long x:a){long next=Math.max(cur,prev+x);prev=cur;cur=next;}System.out.println(cur);}}"
+  },
+  {
+    "slug": "algorithm-13",
+    "title": "Возрастающая подпоследовательность",
+    "difficulty": "MEDIUM",
+    "tag": "Динамическое программирование",
+    "description": "## Условие\n\nНайдите длину наибольшей строго возрастающей подпоследовательности. Её элементы не обязаны стоять рядом.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n8\n10 9 2 5 3 7 101 18\n```\nВывод:\n```text\n4\n```\n",
+    "tests": [
+      {
+        "inputData": "8\n10 9 2 5 3 7 101 18\n",
+        "expectedOutput": "4",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "1",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "11\n2 -2 2 2 2 -1 3 2 3 0 3\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "7\n-1 3 -2 -1 2 -1 -1\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "2\n-3 -1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "9\n0 0 -2 -3 0 1 1 -3 -3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "4\n2 -3 0 3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "7\n2 1 -2 2 3 -2 1\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "4\n0 2 3 2\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "2\n0 -2\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();long[] tails=new long[n];int len=0;for(long x:a){int l=0,r=len;while(l<r){int m=(l+r)/2;if(tails[m]<x)l=m+1;else r=m;}tails[l]=x;if(l==len)len++;}System.out.println(len);}}"
+  },
+  {
+    "slug": "algorithm-14",
+    "title": "Прыжки к финишу",
+    "difficulty": "MEDIUM",
+    "tag": "Жадные алгоритмы",
+    "description": "## Условие\n\nВы стоите в позиции 0. Из позиции i можно прыгнуть вперёд на любое количество шагов от 0 до a[i]. Выведите YES, если последняя позиция достижима, иначе NO.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- 0 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n5\n2 3 1 1 4\n```\nВывод:\n```text\nYES\n```\n",
+    "tests": [
+      {
+        "inputData": "5\n2 3 1 1 4\n",
+        "expectedOutput": "YES",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "YES",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "YES",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "YES",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "YES",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "NO",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "NO",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "2\n0 2\n",
+        "expectedOutput": "NO",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "8\n2 0 3 2 0 2 2 0\n",
+        "expectedOutput": "YES",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "8\n1 1 0 3 1 1 0 1\n",
+        "expectedOutput": "NO",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "5\n2 2 1 2 1\n",
+        "expectedOutput": "YES",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "7\n3 2 1 0 1 1 2\n",
+        "expectedOutput": "NO",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "3\n1 2 1\n",
+        "expectedOutput": "YES",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "3\n3 3 1\n",
+        "expectedOutput": "YES",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "5\n0 3 3 2 2\n",
+        "expectedOutput": "NO",
+        "isPublic": false,
+        "orderIndex": 14
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();long far=0;for(int i=0;i<n&&i<=far;i++)far=Math.max(far,i+a[i]);System.out.println(far>=n-1?\"YES\":\"NO\");}}"
+  },
+  {
+    "slug": "algorithm-15",
+    "title": "Минимальное число прыжков",
+    "difficulty": "MEDIUM",
+    "tag": "Жадные алгоритмы",
+    "description": "## Условие\n\nИз позиции i разрешён прыжок вперёд длиной от 0 до a[i]. Найдите минимальное число прыжков из позиции 0 в n-1, либо -1, если пути нет.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- 0 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n5\n2 3 1 1 4\n```\nВывод:\n```text\n2\n```\n",
+    "tests": [
+      {
+        "inputData": "5\n2 3 1 1 4\n",
+        "expectedOutput": "2",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "0",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "9\n2 2 0 3 1 2 1 0 3\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "11\n0 1 1 1 0 1 0 0 2 3 3\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "5\n0 0 2 2 1\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "10\n0 1 3 0 3 3 0 2 2 0\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "4\n2 1 3 0\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "4\n3 2 0 3\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "12\n2 2 3 1 3 2 0 3 1 3 1 3\n",
+        "expectedOutput": "5",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "12\n1 2 2 1 1 0 3 2 0 1 2 3\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 14
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();long end=0,far=0;int jumps=0;for(int i=0;i<n-1;i++){if(i>far)break;far=Math.max(far,i+a[i]);if(i==end){jumps++;end=far;if(end>=n-1)break;}}System.out.println(n==1?0:far<n-1?-1:jumps);}}"
+  },
+  {
+    "slug": "algorithm-16",
+    "title": "Точка равновесия",
+    "difficulty": "EASY",
+    "tag": "Префиксные суммы",
+    "description": "## Условие\n\nНайдите наименьший индекс, для которого сумма элементов слева равна сумме элементов справа. Индексы начинаются с 0. Если такого индекса нет, выведите -1.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n6\n1 7 3 6 5 6\n```\nВывод:\n```text\n3\n```\n",
+    "tests": [
+      {
+        "inputData": "6\n1 7 3 6 5 6\n",
+        "expectedOutput": "3",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "0",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "4\n-3 -3 0 2\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "3\n0 1 1\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "10\n2 -3 0 3 -2 1 1 2 -1 0\n",
+        "expectedOutput": "6",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "8\n3 2 -2 3 3 -2 0 1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "5\n1 1 -3 1 -2\n",
+        "expectedOutput": "4",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "5\n-1 2 0 2 2\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "6\n-1 0 0 -1 3 1\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "5\n2 2 -2 -3 0\n",
+        "expectedOutput": "-1",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();long total=0,left=0;for(long x:a)total+=x;int ans=-1;for(int i=0;i<n;i++){if(left==total-left-a[i]){ans=i;break;}left+=a[i];}System.out.println(ans);}}"
+  },
+  {
+    "slug": "algorithm-17",
+    "title": "Подмассивы с нулевой суммой",
+    "difficulty": "MEDIUM",
+    "tag": "Префиксные суммы",
+    "description": "## Условие\n\nПосчитайте непустые непрерывные подмассивы с суммой 0. Ответ может не помещаться в int.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n3\n1 -1 0\n```\nВывод:\n```text\n3\n```\n",
+    "tests": [
+      {
+        "inputData": "3\n1 -1 0\n",
+        "expectedOutput": "3",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "1",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "6",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "5\n1 -3 2 -3 1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "11\n-1 -1 -1 -2 -1 3 2 -1 -1 2 2\n",
+        "expectedOutput": "7",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "3\n1 0 -2\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "4\n2 3 -2 3\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "12\n3 -1 3 -2 0 -2 1 0 0 0 1 -1\n",
+        "expectedOutput": "21",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "8\n-2 -3 0 1 3 0 -3 1\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "8\n-2 2 2 0 -3 -3 -2 2\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "5\n0 1 1 0 -1\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();Map<Long,Long> count=new HashMap<>();count.put(0L,1L);long sum=0,ans=0;for(long x:a){sum+=x;ans+=count.getOrDefault(sum,0L);count.merge(sum,1L,Long::sum);}System.out.println(ans);}}"
+  },
+  {
+    "slug": "algorithm-18",
+    "title": "Число инверсий",
+    "difficulty": "HARD",
+    "tag": "Сортировки",
+    "description": "## Условие\n\nПосчитайте пары индексов i < j, для которых a[i] > a[j]. Целевая сложность O(n log n). Для обработки больших ответов используйте long.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n5\n2 4 1 3 5\n```\nВывод:\n```text\n3\n```\n",
+    "tests": [
+      {
+        "inputData": "5\n2 4 1 3 5\n",
+        "expectedOutput": "3",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "0",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "3\n3 -2 2\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "9\n-1 -3 0 -3 -3 -2 2 0 3\n",
+        "expectedOutput": "8",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "5\n-1 -1 -1 2 -1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "2\n0 2\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "2\n2 -2\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "6\n-3 3 0 3 -2 0\n",
+        "expectedOutput": "6",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "3\n3 -3 -1\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "4\n-2 3 1 -2\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();long[] sorted=a.clone();Arrays.sort(sorted);long[] bit=new long[n+2];long ans=0;for(int i=n-1;i>=0;i--){int rank=Arrays.binarySearch(sorted,a[i])+1;for(int j=rank-1;j>0;j-=j&-j)ans+=bit[j];for(int j=rank;j<bit.length;j+=j&-j)bit[j]++;}System.out.println(ans);}}"
+  },
+  {
+    "slug": "algorithm-19",
+    "title": "Самый длинный подъём",
+    "difficulty": "EASY",
+    "tag": "Массивы",
+    "description": "## Условие\n\nНайдите длину самого длинного строго возрастающего непрерывного фрагмента массива.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n5\n1 3 5 4 7\n```\nВывод:\n```text\n3\n```\n",
+    "tests": [
+      {
+        "inputData": "5\n1 3 5 4 7\n",
+        "expectedOutput": "3",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "1",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "12\n-3 -3 1 -2 1 -3 3 0 -3 -3 1 3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "9\n3 2 -2 -3 -3 1 3 0 -3\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "10\n3 -2 -2 -3 2 -1 2 -3 1 0\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "11\n-1 2 -3 -3 1 1 3 1 -1 -1 2\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "3\n-2 -2 -2\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "9\n0 -1 -1 2 -1 3 3 0 -2\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "8\n3 -1 3 -1 0 -3 0 2\n",
+        "expectedOutput": "3",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "3\n0 2 2\n",
+        "expectedOutput": "2",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();int best=1,cur=1;for(int i=1;i<n;i++){cur=a[i]>a[i-1]?cur+1:1;best=Math.max(best,cur);}System.out.println(best);}}"
+  },
+  {
+    "slug": "algorithm-20",
+    "title": "Элемент большинства",
+    "difficulty": "EASY",
+    "tag": "Хеш-таблицы",
+    "description": "## Условие\n\nНайдите элемент, встречающийся строго больше n/2 раз. Если его нет, выведите NONE.\n\n## Формат ввода\n\nВ первой строке записано n — количество элементов. Во второй строке записаны n целых чисел a[i], разделённых пробелами.\n\n## Формат вывода\n\nВыведите ответ на задачу. Если ответ — массив, выведите его элементы через пробел.\n\n## Ограничения\n\n- 1 ≤ n ≤ 2000\n- −10 000 ≤ a[i] ≤ 10 000\n- Для сумм и произведений используйте long.\n\n## Пример\n\nВвод:\n```text\n7\n2 2 1 1 1 2 2\n```\nВывод:\n```text\n2\n```\n",
+    "tests": [
+      {
+        "inputData": "7\n2 2 1 1 1 2 2\n",
+        "expectedOutput": "2",
+        "isPublic": true,
+        "orderIndex": 0
+      },
+      {
+        "inputData": "1\n0\n",
+        "expectedOutput": "0",
+        "isPublic": true,
+        "orderIndex": 1
+      },
+      {
+        "inputData": "1\n1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 2
+      },
+      {
+        "inputData": "3\n1 1 1\n",
+        "expectedOutput": "1",
+        "isPublic": false,
+        "orderIndex": 3
+      },
+      {
+        "inputData": "3\n3 2 1\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 4
+      },
+      {
+        "inputData": "3\n0 0 0\n",
+        "expectedOutput": "0",
+        "isPublic": false,
+        "orderIndex": 5
+      },
+      {
+        "inputData": "5\n1 0 2 0 3\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 6
+      },
+      {
+        "inputData": "3\n-1 -2 -3\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 7
+      },
+      {
+        "inputData": "3\n-1 0 1\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 8
+      },
+      {
+        "inputData": "4\n-3 -3 2 2\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 9
+      },
+      {
+        "inputData": "5\n-1 0 0 -2 -2\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 10
+      },
+      {
+        "inputData": "4\n3 3 -1 -2\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 11
+      },
+      {
+        "inputData": "5\n-2 -3 -2 -3 1\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 12
+      },
+      {
+        "inputData": "6\n-3 3 0 -2 -1 -1\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 13
+      },
+      {
+        "inputData": "6\n-2 2 3 -3 -2 -1\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 14
+      },
+      {
+        "inputData": "11\n3 3 0 -3 -1 2 -2 0 -3 -1 -3\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 15
+      },
+      {
+        "inputData": "9\n1 3 -3 1 -2 1 -2 -1 -2\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 16
+      },
+      {
+        "inputData": "8\n-2 -2 -3 -1 -2 2 0 -2\n",
+        "expectedOutput": "NONE",
+        "isPublic": false,
+        "orderIndex": 17
+      }
+    ],
+    "reference": "import java.util.*; public class Solution { public static void main(String[] args) {Scanner s=new Scanner(System.in);int n=s.nextInt();long[] a=new long[n];for(int i=0;i<n;i++)a[i]=s.nextLong();long candidate=0;int count=0;for(long x:a){if(count==0)candidate=x;count+=x==candidate?1:-1;}count=0;for(long x:a)if(x==candidate)count++;System.out.println(count>n/2?String.valueOf(candidate):\"NONE\");}}"
+  }
+]

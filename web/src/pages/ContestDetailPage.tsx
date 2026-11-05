@@ -54,7 +54,8 @@ export default function ContestDetailPage() {
   const [copySuccess, setCopySuccess] = useState(false)
   const isOwnContest = contest?.organizerId != null && user?.id != null && contest.organizerId === user.id
 
-  const countdownTarget = contest?.status === 'RUNNING'
+  const timeless = !!contest && new Date(contest.endTime).getUTCFullYear() >= 9000
+  const countdownTarget = timeless ? null : contest?.status === 'RUNNING'
     ? contest.endTime
     : contest?.status === 'UPCOMING'
     ? contest.startTime
@@ -97,7 +98,7 @@ export default function ContestDetailPage() {
       <div className={styles.header}>
         <div>
           <h1>{contest.title}</h1>
-          {(contest.status === 'RUNNING' || contest.status === 'UPCOMING') && (
+          {!timeless && (contest.status === 'RUNNING' || contest.status === 'UPCOMING') && (
             <div style={{
               marginTop: 10,
               fontSize: 22,
@@ -131,7 +132,7 @@ export default function ContestDetailPage() {
               )}
             </span>
             <span style={{ fontSize: 13, color: 'var(--text-2)' }}>
-              {new Date(contest.startTime).toLocaleString('ru-RU')} — {new Date(contest.endTime).toLocaleString('ru-RU')}
+              {timeless ? 'Бессрочная тренировка · решайте в своём темпе' : `${new Date(contest.startTime).toLocaleString('ru-RU')} — ${new Date(contest.endTime).toLocaleString('ru-RU')}`}
             </span>
           </div>
         </div>

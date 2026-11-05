@@ -80,10 +80,11 @@ test('contest registers participant, preserves context and updates standings', a
   await page.goto(`/contests/${data.active.id}/standings`); await expect(page.getByRole('link', { name: user.student.name, exact: true })).toBeVisible()
   await page.screenshot({ path: 'test-results/screenshots/standings.png', fullPage: true })
 })
-test('private invitation joins contest and it appears in participant list', async ({ page }) => {
+test('private invitation joins contest without exposing it in public list', async ({ page }) => {
   await login(page); await page.goto(`/contests/invite/${data.private.inviteToken}`)
   await page.getByRole('button', { name: /Принять|Присоединиться|Участвовать|Зарегистрироваться/ }).click()
-  await page.goto('/contests'); await expect(page.getByRole('heading', { name: data.private.title, exact: true })).toBeVisible()
+  await page.goto('/contests'); await expect(page.getByRole('heading', { name: data.private.title, exact: true })).not.toBeVisible()
+  await page.goto(`/contests/${data.private.id}`); await expect(page.getByRole('heading', { name: data.private.title, exact: true })).toBeVisible()
 })
 test('password change rejects old login and permits new login', async ({ page, request }) => {
   await login(page, 'password'); await page.goto('/profile')
@@ -196,7 +197,7 @@ test('catalog failure is recoverable with retry', async ({ page }) => {
 test('roadmap shows Russian topics and links to the available catalog', async ({ page }) => {
   await login(page); await page.goto('/learn')
   await expect(page.getByRole('heading', { name: 'Роудмап по алгоритмам', exact: true })).toBeVisible()
-  await expect(page.getByText('Математика и геометрия', { exact: true })).toBeVisible()
+  await expect(page.getByText('Минимальные остовные деревья', { exact: true })).toBeVisible()
   await page.screenshot({ path: 'test-results/screenshots/roadmap.png', fullPage: true })
   await page.getByRole('link', { name: 'К задачам →', exact: true }).click()
   await expect(page).toHaveURL(/\/problems$/)

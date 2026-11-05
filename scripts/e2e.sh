@@ -15,4 +15,5 @@ status=$(docker inspect -f '{{.State.ExitCode}}' "$container")
 rm -rf web/test-results web/playwright-report
 docker cp "$container:/app/test-results" web/ 2>/dev/null || true
 docker cp "$container:/app/playwright-report" web/ 2>/dev/null || true
+if [ "${STACKR_KEEP_QA:-0}" != "1" ]; then python3 scripts/cleanup-qa.py; fi
 exit "$status"

@@ -11,3 +11,8 @@ __MACOSX
 **/test-results
 **/playwright-report
 **/.state.json
+
+**/.demo-preview.json
+.demo-content.json
+.demo-validation.lock
+backups/

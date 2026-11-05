@@ -50,3 +50,8 @@ backups/
 
 __pycache__/
 *.pyc
+
+.demo-content.json
+
+.demo-validation.lock
+web/e2e/.demo-preview.json

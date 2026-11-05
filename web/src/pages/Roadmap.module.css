@@ -10,7 +10,7 @@
 .canvas { position:relative; width:1140px; min-width:1140px; margin:0 auto; height:1240px; }
 .lines { position:absolute; inset:0; width:100%; height:100%; }
 .topics { list-style:none; padding:0; margin:0; }
-.node { position:absolute; width:140px; height:76px; padding:10px 12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; border:1px solid #8c71cf; border-radius:10px; background:#252039; color:#f0eaff; font-size:13px; font-weight:600; line-height:1.35; box-shadow:0 4px 0 #161222; }
+.node { position:absolute; width:140px; height:90px; padding:10px 12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; border:1px solid #8c71cf; border-radius:10px; background:#252039; color:#f0eaff; font-size:13px; font-weight:600; line-height:1.35; box-shadow:0 4px 0 #161222; }
 .number { color:#b9a4ed; font-size:10px; letter-spacing:.12em; font-weight:500; }
 .footnote { color:var(--text-3); text-align:center; margin:18px 0 0; font-size:13px; }
 @media(min-width:1400px) { .canvas { min-width:1140px; } }

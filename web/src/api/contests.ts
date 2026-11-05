@@ -1,8 +1,8 @@
 import api from './client'
 import type { ContestAnalytics, ContestDetail, ContestShort, LeaderboardEntry } from '../types'
 
-export const getContests = (status?: string) =>
-  api.get<ContestShort[]>('/contests', { params: { status } })
+export const getContests = (status?: string, mine = false) =>
+  api.get<ContestShort[]>('/contests', { params: { status, mine } })
 
 export const getContest = (id: number) =>
   api.get<ContestDetail>(`/contests/${id}`)

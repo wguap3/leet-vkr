@@ -31,11 +31,12 @@ public class ContestController {
     @GetMapping
     public ResponseEntity<List<ContestShortDto>> getAll(
             @RequestParam(required = false) ContestStatus status,
+            @RequestParam(defaultValue = "false") boolean mine,
             @AuthenticationPrincipal UserPrincipal principal) {
         Long uid = principal != null ? principal.getId() : null;
         boolean isOrganizerOrAdmin = principal != null &&
                 (principal.getRole() == Role.ORGANIZER || principal.getRole() == Role.ADMIN);
-        return ResponseEntity.ok(contestService.getContests(status, uid, isOrganizerOrAdmin));
+        return ResponseEntity.ok(contestService.getContests(status, uid, isOrganizerOrAdmin, mine));
     }
 
     @GetMapping("/{id}")

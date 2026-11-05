@@ -59,6 +59,23 @@ class ContestControllerIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(get("/api/contests/invite/"+token)).andExpect(status().isOk());
     }
 
+    @Test
+    void catalogShowsOnlyPublicUnfinishedWhileAuthorCanFindPrivateOnMine() throws Exception {
+        var now = LocalDateTime.now();
+        contestRepository.save(Contest.builder().title("Open practice").organizer(organizer).isPublic(true).startTime(now.minusHours(1)).endTime(now.plusHours(1)).build());
+        var secret = contestRepository.save(Contest.builder().title("Private practice").organizer(organizer).isPublic(false).inviteToken("private-only").startTime(now.minusHours(1)).endTime(now.plusHours(1)).build());
+        contestRepository.save(Contest.builder().title("Finished practice").organizer(organizer).isPublic(true).startTime(now.minusHours(2)).endTime(now.minusHours(1)).build());
+        mockMvc.perform(get("/api/contests").header("Authorization", bearer(contestantToken)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].title").value("Open practice"));
+        mockMvc.perform(get("/api/contests?mine=true").header("Authorization", bearer(organizerToken)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2));
+        mockMvc.perform(get("/api/contests/"+secret.getId()).header("Authorization", bearer(contestantToken))).andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/contests/invite/private-only/join").header("Authorization", bearer(contestantToken))).andExpect(status().isOk());
+        mockMvc.perform(get("/api/contests").header("Authorization", bearer(contestantToken)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
+        mockMvc.perform(get("/api/contests/"+secret.getId()).header("Authorization", bearer(contestantToken))).andExpect(status().isOk());
+    }
+
     // ── GET /api/contests ─────────────────────────────────────────────────────
 
     @Test
