@@ -70,6 +70,7 @@ export default function ContestInvitePage() {
 
   const isRegistered = contest.isRegistered
   const isContestant = user?.role === 'CONTESTANT'
+  const canManage = user?.id === contest.organizerId || user?.role === 'ADMIN'
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '70vh', padding: '32px 16px' }}>
@@ -150,16 +151,16 @@ export default function ContestInvitePage() {
         ) : !isContestant ? (
           <div>
             <p style={{ color: 'var(--text-3)', fontSize: 13 }}>
-              Только участники (роль CONTESTANT) могут регистрироваться на контесты.
+              Для участия нужен аккаунт участника. Аккаунт организатора предназначен для создания задач и соревнований.
             </p>
-            <Link to={`/contests/${contest.id}`} className="btn btn-outline" style={{ marginTop: 12 }}>
-              Посмотреть контест
-            </Link>
+            {canManage && <Link to={`/contests/${contest.id}`} className="btn btn-outline" style={{ marginTop: 12 }}>
+              Управлять контестом
+            </Link>}
           </div>
         ) : contest.status === 'FINISHED' ? (
           <div>
             <p style={{ color: 'var(--red)', fontSize: 13, marginBottom: 12 }}>Контест уже завершён</p>
-            <Link to={`/contests/${contest.id}`} className="btn btn-outline">Посмотреть результаты</Link>
+            <p style={{ color: 'var(--text-2)' }}>Регистрация закрыта. Результаты доступны ранее вступившим участникам.</p>
           </div>
         ) : (
           <button

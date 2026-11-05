@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Toast from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -28,14 +28,16 @@ import { useAuthStore } from './store/authStore'
 import type { Role } from './types'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
   const { isAuthenticated } = useAuthStore()
-  return isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />
+  return isAuthenticated() ? <>{children}</> : <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />
 }
 
 function OrganizerRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore()
+  const location = useLocation()
   const allowed: Role[] = ['ORGANIZER', 'ADMIN']
-  if (!isAuthenticated()) return <Navigate to="/login" replace />
+  if (!isAuthenticated()) return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />
   if (!user || !allowed.includes(user.role)) return <Navigate to="/problems" replace />
   return <>{children}</>
 }

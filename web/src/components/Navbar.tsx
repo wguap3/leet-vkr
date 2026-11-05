@@ -67,7 +67,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className={styles.nav}>
+    <nav className={`${styles.nav} ${!auth ? styles.guest : ''}`}>
       <div className={styles.inner}>
         <Link to="/" className={styles.logo}>
           <Brand />

@@ -69,7 +69,16 @@ export default function ContestDetailPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [id])
+  useEffect(() => {
+    setLoading(true); setContest(null); setLeaderboard([]); setError(''); setTab('problems')
+    setConfirmRotate(false); setCopySuccess(false)
+    let current = true
+    contestsApi.getContest(Number(id))
+      .then(({ data }) => { if (current) setContest(data) })
+      .catch(() => { if (current) setError('Контест недоступен или не найден') })
+      .finally(() => { if (current) setLoading(false) })
+    return () => { current = false }
+  }, [id])
 
   useEffect(() => {
     if (tab === 'leaderboard') {

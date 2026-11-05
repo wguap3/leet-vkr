@@ -251,3 +251,18 @@ test('key screens have no automated WCAG A/AA accessibility violations', async (
   }
   expect(violations).toEqual([])
 })
+
+test('login restores a protected deep link including contest query', async ({ page }) => {
+  const target = `/problems/${data.problem.id}?contestId=${data.active.id}`
+  await page.goto(target)
+  await expect(page).toHaveURL(url => url.pathname === '/login' && url.searchParams.get('redirect') === target)
+  await page.getByLabel('Логин', { exact: true }).fill(user.student.name)
+  await page.getByLabel('Пароль', { exact: true }).fill(user.student.password)
+  await page.getByRole('button', { name: 'Войти', exact: true }).click()
+  await expect(page).toHaveURL(url => url.pathname === `/problems/${data.problem.id}` && url.searchParams.get('contestId') === String(data.active.id))
+})
+test('another organizer invitation has clear role message without forbidden action', async ({ page }) => {
+  await login(page, 'otherorg'); await page.goto(`/contests/invite/${data.private.inviteToken}`)
+  await expect(page.getByText('Для участия нужен аккаунт участника.', { exact: false })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Посмотреть контест|Управлять контестом/ })).toHaveCount(0)
+})
