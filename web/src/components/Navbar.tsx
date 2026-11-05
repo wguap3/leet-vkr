@@ -76,7 +76,7 @@ export default function Navbar() {
         <div className={styles.links}>
           {auth && <>
             <NavLink to="/problems" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Задачи</NavLink>
-            <NavLink to="/learn" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Треки</NavLink>
+            <NavLink to="/learn" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Роудмап</NavLink>
             <NavLink to="/contests" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Контесты</NavLink>
             <NavLink to="/leaderboard" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Рейтинг</NavLink>
             {canCreate && (

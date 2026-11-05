@@ -193,12 +193,13 @@ test('catalog failure is recoverable with retry', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Нет соединения', exact: true })).not.toBeVisible()
 })
 
-test('topic practice links to a correctly filtered catalog with real progress', async ({ page }) => {
+test('roadmap shows Russian topics and links to the available catalog', async ({ page }) => {
   await login(page); await page.goto('/learn')
-  await expect(page.getByRole('heading', { name: 'Практика по темам', exact: true })).toBeVisible()
-  await page.getByRole('link').filter({ has: page.getByRole('heading', { name: data.tag.name, exact: true }) }).click()
-  await expect(page.getByRole('combobox', { name: 'Тема', exact: true })).toHaveValue(String(data.tag.id))
-  await expect(page.getByRole('link', { name: data.problem.title, exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Роудмап по алгоритмам', exact: true })).toBeVisible()
+  await expect(page.getByText('Математика и геометрия', { exact: true })).toBeVisible()
+  await page.screenshot({ path: 'test-results/screenshots/roadmap.png', fullPage: true })
+  await page.getByRole('link', { name: 'К задачам →', exact: true }).click()
+  await expect(page).toHaveURL(/\/problems$/)
 })
 test('two contestants have consistent ranks and wrong-answer penalties in both tables', async ({ request }) => {
   await request.post(`/api/contests/${data.active.id}/register`, { headers: auth('opponent') })

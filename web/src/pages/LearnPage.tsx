@@ -1,21 +1,36 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getMyProgress } from '../api/users'
-import type { TagProgress } from '../types'
-import RequestError from '../components/RequestError'
+import styles from './Roadmap.module.css'
+
+const nodes = [
+  ['Основы Java', 500, 40],
+  ['Массивы и хеширование', 500, 150],
+  ['Два указателя', 290, 270], ['Стек и очередь', 710, 270],
+  ['Бинарный поиск', 150, 400], ['Скользящее окно', 500, 400], ['Связанные списки', 850, 400],
+  ['Деревья', 500, 530],
+  ['Префиксные деревья', 150, 670], ['Куча и приоритетная очередь', 500, 670], ['Перебор с возвратом', 850, 670],
+  ['Интервалы', 150, 820], ['Жадные алгоритмы', 400, 820], ['Графы', 680, 820], ['Одномерная динамика', 950, 820],
+  ['Продвинутые графы', 450, 970], ['Двумерная динамика', 720, 970], ['Битовые операции', 990, 970],
+  ['Математика и геометрия', 720, 1120],
+] as const
+const edges = [[0,1],[1,2],[1,3],[2,4],[2,5],[3,6],[4,7],[5,7],[6,7],[7,8],[7,9],[7,10],[9,11],[9,12],[9,13],[10,13],[10,14],[13,15],[13,16],[14,16],[14,17],[16,18],[17,18]]
+
 export default function LearnPage() {
-  const [tracks, setTracks] = useState<TagProgress[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-  useEffect(() => { getMyProgress().then(r => setTracks(r.data)).catch(() => setError(true)).finally(() => setLoading(false)) }, [])
-  if (error) return <RequestError message="Не удалось загрузить учебные треки" />
-  return <div className="page-container"><div className="page-header"><div><p className="eyebrow">УЧИТЕСЬ В СВОЁМ ТЕМПЕ</p><h1>Практика по темам</h1><p className="page-description">Сосредоточьтесь на одной теме, начните с лёгких задач и возвращайтесь к нерешённым. Прогресс сохраняется после каждого принятого решения.</p></div><Link to="/problems" className="btn btn-outline">Весь каталог →</Link></div>
-    {loading ? <div className="empty-state" role="status"><span className="spinner" />Загружаем прогресс…</div> : tracks.length === 0 ? <div className="card empty-state"><h2>Треки готовятся</h2><p>Они появятся, когда организатор добавит темы к опубликованным задачам.</p><Link to="/problems" className="btn btn-primary">Открыть задачи</Link></div> :
-    <div className="track-grid">{tracks.map((t, i) => { const progress = t.total ? Math.min(100, Math.round(t.solved / t.total * 100)) : 0; return <Link to={`/problems?tagId=${t.tagId}`} className="card track-card" key={t.tagId}>
-      <div className="section-bar"><span className="eyebrow">ТЕМА {String(i + 1).padStart(2, '0')}</span><span className={`badge ${progress === 100 ? 'badge-ac' : 'badge-pending'}`}>{progress === 100 ? 'Завершено' : progress ? 'В процессе' : 'Начать'}</span></div>
-      <h2>{t.tagName}</h2><p className="page-description">Решено {t.solved} из {t.total} задач</p>
-      <progress value={t.solved} max={Math.max(1, t.total)} aria-label={`Прогресс по теме ${t.tagName}`} />
-      <span className="muted">{progress}% пройдено <span style={{ float: 'right', color: 'var(--accent)' }}>К задачам →</span></span>
-    </Link> })}</div>}
+  return <div className="page-container">
+    <header className={styles.header}>
+      <div><p className="eyebrow">ВАШ МАРШРУТ ПОДГОТОВКИ</p><h1>Роудмап по алгоритмам</h1>
+        <p className="page-description">От первых массивов до графов и динамического программирования. Двигайтесь сверху вниз: линии показывают рекомендуемую последовательность изучения.</p></div>
+      <Link to="/problems" className="btn btn-outline">К задачам →</Link>
+    </header>
+    <div className={styles.notice}><span className={styles.dot} /><div><strong>Карта готова · наполнение в разработке</strong><p>Здесь появятся теория и 100 задач по темам — от Easy до Hard. Пока можно практиковаться в общем каталоге.</p></div></div>
+    <section className={styles.map} aria-label="Карта изучения алгоритмов">
+      <div className={styles.canvas}>
+        <svg className={styles.lines} viewBox="0 0 1140 1240" fill="none" aria-hidden="true">
+          <defs><linearGradient id="road-line" x1="570" y1="0" x2="570" y2="1240" gradientUnits="userSpaceOnUse"><stop stopColor="#b6a0ff"/><stop offset="1" stopColor="#67518f"/></linearGradient></defs>
+          {edges.map(([a,b]) => { const from=nodes[a], to=nodes[b]; const y=from[2]+76, end=to[2], mid=(y+end)/2; return <path key={`${a}-${b}`} d={`M ${from[1]+70} ${y} C ${from[1]+70} ${mid}, ${to[1]+70} ${mid}, ${to[1]+70} ${end}`} stroke="url(#road-line)" strokeWidth="2" /> })}
+        </svg>
+        <ol className={styles.topics}>{nodes.map(([title,x,y],i)=><li key={title} className={styles.node} style={{left:`${x/11.4}%`,top:y}}><span className={styles.number}>{String(i+1).padStart(2,'0')}</span><span>{title}</span></li>)}</ol>
+      </div>
+    </section>
+    <p className={styles.footnote}>Порядок — ориентир, а не ограничение. К знакомым темам можно возвращаться в любой момент.</p>
   </div>
 }
