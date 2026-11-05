@@ -17,11 +17,13 @@ export default function ContestInvitePage() {
 
   useEffect(() => {
     if (!token) return
+    setLoading(true)
+    setError(null)
     getContestByInviteToken(token)
       .then(({ data }) => setContest(data))
       .catch(() => setError('Недействительная ссылка-приглашение'))
       .finally(() => setLoading(false))
-  }, [token])
+  }, [token, user?.id])
 
   const handleJoin = async () => {
     if (!auth) {
@@ -68,6 +70,7 @@ export default function ContestInvitePage() {
 
   const isRegistered = contest.isRegistered
   const isContestant = user?.role === 'CONTESTANT'
+  const canManage = user?.id === contest.organizerId || user?.role === 'ADMIN'
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '70vh', padding: '32px 16px' }}>
@@ -103,7 +106,7 @@ export default function ContestInvitePage() {
           {contest.description && (
             <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12 }}>{contest.description}</p>
           )}
-          <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-3)' }}>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12, color: 'var(--text-3)' }}>
             <span style={{display:'flex',alignItems:'center',gap:4}}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               {new Date(contest.startTime).toLocaleString('ru-RU')}
@@ -141,23 +144,23 @@ export default function ContestInvitePage() {
             <Link to={`/login?redirect=/contests/invite/${token}`} className="btn btn-primary">
               Войти
             </Link>
-            <Link to={`/register`} className="btn btn-outline">
+            <Link to={`/register?redirect=${encodeURIComponent(`/contests/invite/${token}`)}`} className="btn btn-outline">
               Создать аккаунт
             </Link>
           </div>
         ) : !isContestant ? (
           <div>
             <p style={{ color: 'var(--text-3)', fontSize: 13 }}>
-              Только участники (роль CONTESTANT) могут регистрироваться на контесты.
+              Для участия нужен аккаунт участника. Аккаунт организатора предназначен для создания задач и соревнований.
             </p>
-            <Link to={`/contests/${contest.id}`} className="btn btn-outline" style={{ marginTop: 12 }}>
-              Посмотреть контест
-            </Link>
+            {canManage && <Link to={`/contests/${contest.id}`} className="btn btn-outline" style={{ marginTop: 12 }}>
+              Управлять контестом
+            </Link>}
           </div>
         ) : contest.status === 'FINISHED' ? (
           <div>
             <p style={{ color: 'var(--red)', fontSize: 13, marginBottom: 12 }}>Контест уже завершён</p>
-            <Link to={`/contests/${contest.id}`} className="btn btn-outline">Посмотреть результаты</Link>
+            <p style={{ color: 'var(--text-2)' }}>Регистрация закрыта. Результаты доступны ранее вступившим участникам.</p>
           </div>
         ) : (
           <button

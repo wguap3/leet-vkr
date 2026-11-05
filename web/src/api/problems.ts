@@ -2,7 +2,7 @@ import api from './client'
 import type { Hint, Page, ProblemDetail, ProblemShort, ProblemStats, RunCodeResult, TestCase } from '../types'
 
 export const getProblems = (params?: {
-  difficulty?: string; tagId?: number; search?: string; page?: number; size?: number
+  difficulty?: string; tagId?: number; search?: string; page?: number; size?: number; mine?: boolean; solved?: boolean; sort?: string
 }) => api.get<Page<ProblemShort>>('/problems', { params })
 
 export const getProblem = (id: number) =>
@@ -74,3 +74,5 @@ export const updateProblem = (id: number, data: {
 
 export const getHintsFull = (problemId: number) =>
   api.get<import('../types').Hint[]>(`/problems/${problemId}/hints`)
+
+export const deleteProblem = (id: number) => api.delete(`/problems/${id}`)

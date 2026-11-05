@@ -10,4 +10,5 @@
     <include file="classpath:db/changelog/003-notifications.xml"/>
     <include file="classpath:db/changelog/004-contest-invite-token.xml"/>
 
+    <include file="db/changelog/005-submission-queue.xml"/>
 </databaseChangeLog>

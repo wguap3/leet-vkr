@@ -68,7 +68,7 @@ export default function CreateProblemPage() {
     e.preventDefault()
     if (!title.trim()) { setError('Введите название'); return }
     if (!description.trim()) { setError('Введите условие'); return }
-    const validTc = testCases.filter(tc => tc.inputData.trim() && tc.expectedOutput.trim())
+    const validTc = testCases.filter(tc => tc.inputData.length > 0 || tc.expectedOutput.length > 0)
     if (validTc.length === 0) { setError('Добавьте хотя бы один тест-кейс'); return }
 
     setSaving(true)
@@ -123,22 +123,22 @@ export default function CreateProblemPage() {
             <h3 className={styles.sectionTitle}>Основное</h3>
             <div className={styles.field}>
               <label>Название *</label>
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Например: Сумма двух чисел" />
+              <input aria-label="Название *" value={title} onChange={e => setTitle(e.target.value)} placeholder="Например: Сумма двух чисел" />
             </div>
             <div className={styles.row}>
               <div className={styles.field}>
                 <label>Сложность</label>
-                <select value={difficulty} onChange={e => setDifficulty(e.target.value as Difficulty)}>
+                <select aria-label="Сложность" value={difficulty} onChange={e => setDifficulty(e.target.value as Difficulty)}>
                   {DIFFICULTIES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                 </select>
               </div>
               <div className={styles.field}>
                 <label>Лимит времени (мс)</label>
-                <input type="number" min={100} max={10000} value={timeLimit} onChange={e => setTimeLimit(+e.target.value)} />
+                <input aria-label="Лимит времени (мс)" type="number" min={100} max={10000} value={timeLimit} onChange={e => setTimeLimit(+e.target.value)} />
               </div>
               <div className={styles.field}>
                 <label>Лимит памяти (МБ)</label>
-                <input type="number" min={16} max={512} value={memoryLimit} onChange={e => setMemoryLimit(+e.target.value)} />
+                <input aria-label="Лимит памяти (МБ)" type="number" min={16} max={512} value={memoryLimit} onChange={e => setMemoryLimit(+e.target.value)} />
               </div>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function CreateProblemPage() {
         <div className="card">
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Условие задачи * <span className={styles.hint}>(поддерживается Markdown)</span></h3>
-            <textarea
+            <textarea aria-label="Условие задачи"
               className={styles.textarea}
               rows={12}
               value={description}
@@ -185,6 +185,7 @@ export default function CreateProblemPage() {
             <h3 className={styles.sectionTitle}>Шаблон кода</h3>
             <textarea
               className={styles.textarea}
+              aria-label="Шаблон кода"
               rows={8}
               value={codeTemplate}
               onChange={e => setCodeTemplate(e.target.value)}
@@ -205,7 +206,7 @@ export default function CreateProblemPage() {
                   <div className={styles.tcIndex}>#{i + 1}</div>
                   <div className={styles.field} style={{ flex: 1 }}>
                     <label>Ввод</label>
-                    <textarea
+                    <textarea aria-label="Ввод"
                       rows={3}
                       className={styles.tcArea}
                       value={tc.inputData}
@@ -215,7 +216,7 @@ export default function CreateProblemPage() {
                   </div>
                   <div className={styles.field} style={{ flex: 1 }}>
                     <label>Ожидаемый вывод</label>
-                    <textarea
+                    <textarea aria-label="Ожидаемый вывод"
                       rows={3}
                       className={styles.tcArea}
                       value={tc.expectedOutput}
@@ -260,7 +261,7 @@ export default function CreateProblemPage() {
                   <div className={styles.tcIndex}>#{i + 1}</div>
                   <div className={styles.field} style={{ flex: 1 }}>
                     <label>Текст подсказки</label>
-                    <textarea
+                    <textarea aria-label="Текст подсказки"
                       rows={2}
                       className={styles.tcArea}
                       value={h.text}
@@ -270,7 +271,7 @@ export default function CreateProblemPage() {
                   </div>
                   <div className={styles.field} style={{ width: 160 }}>
                     <label>После N попыток</label>
-                    <input
+                    <input aria-label="После N попыток"
                       type="number"
                       min={0}
                       max={100}

@@ -1,3 +1,4 @@
+import RequestError from '../components/RequestError'
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
@@ -16,6 +17,7 @@ const RANK_CLS = ['', styles.gold, styles.silver, styles.bronze]
 export default function LeaderboardPage() {
   const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [page, setPage] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
@@ -23,8 +25,11 @@ export default function LeaderboardPage() {
     setLoading(true)
     api.get<Page<UserProfile>>(`/users/leaderboard?page=${page}&size=20`)
       .then(({ data }) => { setUsers(data.content); setTotalPages(data.totalPages) })
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false))
   }, [page])
+
+  if (loadError) return <RequestError />
 
   return (
     <div className="page-container">

@@ -25,7 +25,7 @@ export const getLeaderboard = (params?: { page?: number; size?: number }) =>
 export const getProfile = (id: number) => api.get<UserProfile>(`/users/${id}`)
 
 // ── Admin ──────────────────────────────────────────────────────────────────
-export const getAllUsers = (params?: { page?: number; size?: number }) =>
+export const getAllUsers = (params?: { page?: number; size?: number; search?: string }) =>
   api.get<Page<UserAdmin>>('/users', { params })
 
 export const changeRole = (id: number, role: Role) =>

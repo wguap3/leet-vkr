@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 public class ProblemService {
 
     private final ProblemRepository problemRepository;
+    private final com.stackr.api.repository.ContestRepository contestRepository;
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
     private final TestCaseRepository testCaseRepository;
@@ -63,6 +64,36 @@ public class ProblemService {
         return page.map(p -> toShortDto(p,
                 solvedCounts.getOrDefault(p.getId(), 0L),
                 userSolved.contains(p.getId())));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProblemShortDto> getCatalog(Difficulty difficulty, Long tagId, String search, Long userId,
+            boolean mine, Boolean solved, Pageable pageable) {
+        org.springframework.data.jpa.domain.Specification<Problem> filters = (root, query, cb) -> {
+            var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            predicates.add(mine ? cb.equal(root.get("author").get("id"), userId) : cb.isTrue(root.get("visible")));
+            if (difficulty != null) predicates.add(cb.equal(root.get("difficulty"), difficulty));
+            if (tagId != null) { predicates.add(cb.equal(root.join("tags").get("id"), tagId)); query.distinct(true); }
+            if (search != null && !search.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("title")), "%" + search.strip().toLowerCase(java.util.Locale.ROOT) + "%"));
+            }
+            if (solved != null) {
+                var sub = query.subquery(Long.class);
+                var submission = sub.from(com.stackr.api.entity.Submission.class);
+                sub.select(submission.get("id")).where(cb.equal(submission.get("problem").get("id"), root.get("id")),
+                        cb.equal(submission.get("user").get("id"), userId), cb.equal(submission.get("verdict"), Verdict.AC));
+                predicates.add(solved ? cb.exists(sub) : cb.not(cb.exists(sub)));
+            }
+            return cb.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
+        };
+        var page = problemRepository.findAll(filters, pageable);
+        var ids = page.stream().map(Problem::getId).toList();
+        if (ids.isEmpty()) return page.map(p -> toShortDto(p, 0, false));
+        Map<Long, Long> counts = new HashMap<>();
+        submissionRepository.countDistinctUsersByProblemIdsAndVerdict(ids, Verdict.AC)
+                .forEach(row -> counts.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue()));
+        var accepted = new HashSet<>(submissionRepository.findSolvedProblemIdsByUserIdAndProblemIds(userId, ids));
+        return page.map(p -> toShortDto(p, counts.getOrDefault(p.getId(), 0L), accepted.contains(p.getId())));
     }
 
     @Transactional(readOnly = true)
@@ -100,8 +131,14 @@ public class ProblemService {
         var problem = findOrThrow(id);
         checkOwnership(problem, userId, "update");
 
-        if (req.title() != null) problem.setTitle(req.title());
-        if (req.description() != null) problem.setDescription(req.description());
+        if (req.title() != null) {
+            if (req.title().isBlank()) throw new BusinessException("Укажите название задачи");
+            problem.setTitle(req.title());
+        }
+        if (req.description() != null) {
+            if (req.description().isBlank()) throw new BusinessException("Укажите условие задачи");
+            problem.setDescription(req.description());
+        }
         if (req.difficulty() != null) problem.setDifficulty(req.difficulty());
         if (req.timeLimitMs() != null) problem.setTimeLimitMs(req.timeLimitMs());
         if (req.memoryLimitMb() != null) problem.setMemoryLimitMb(req.memoryLimitMb());
@@ -118,6 +155,33 @@ public class ProblemService {
     public void deleteProblem(Long id, Long userId) {
         var problem = findOrThrow(id);
         checkOwnership(problem, userId, "delete");
+        if (submissionRepository.existsByProblemId(id)) {
+            throw new com.stackr.api.exception.ConflictException("Задача используется в посылках. Удаление изменит историю решений. "
+                    + (problem.isVisible() ? "Можно снять её с публикации." : "Задача уже скрыта из каталога."));
+        }
+        var contests = contestRepository.findContainingProblem(id);
+        boolean admin = userRepository.findById(userId).map(u -> u.getRole() == Role.ADMIN).orElse(false);
+        var now = java.time.LocalDateTime.now();
+        for (var contest : contests) {
+            boolean own = admin || contest.getOrganizer().getId().equals(userId);
+            if (!own) {
+                throw new com.stackr.api.exception.ConflictException("Задача используется в контесте другого организатора. "
+                        + "Его организатор должен убрать её из набора задач."
+                        + (problem.isVisible() ? " Можно снять задачу с публикации." : " Задача уже скрыта из каталога."));
+            }
+            if (now.isBefore(contest.getEndTime()) || submissionRepository.existsByContestId(contest.getId())) {
+                throw new com.stackr.api.exception.ConflictException("Задача используется в контесте «" + contest.getTitle()
+                        + "» (№" + contest.getId() + "). "
+                        + (now.isBefore(contest.getEndTime())
+                        ? "Сначала уберите её из набора задач контеста." : "У контеста есть посылки: состав задач сохраняется для истории.")
+                        + (problem.isVisible() ? " Можно снять задачу с публикации." : " Задача уже скрыта из каталога."));
+            }
+        }
+        for (var contest : contests) {
+            contest.getProblems().removeIf(p -> p.getId().equals(id));
+            contestRepository.save(contest);
+        }
+        if (!contests.isEmpty()) contestRepository.flush();
         problemRepository.deleteById(id);
     }
 
@@ -125,6 +189,9 @@ public class ProblemService {
     public void setVisibility(Long id, boolean visible, Long userId) {
         var problem = findOrThrow(id);
         checkOwnership(problem, userId, "change visibility of");
+        if (visible && testCaseRepository.findByProblemIdOrderByOrderIndexAsc(id).isEmpty()) {
+            throw new BusinessException("Добавьте хотя бы один тест перед публикацией");
+        }
         problem.setVisible(visible);
         problemRepository.save(problem);
     }
@@ -179,7 +246,7 @@ public class ProblemService {
         Set<TagDto> tags = p.getTags().stream()
                 .map(t -> new TagDto(t.getId(), t.getName()))
                 .collect(Collectors.toSet());
-        return new ProblemShortDto(p.getId(), p.getTitle(), p.getDifficulty(), tags, solvedCount, userVerdict);
+        return new ProblemShortDto(p.getId(), p.getTitle(), p.getDifficulty(), tags, solvedCount, userVerdict, p.getAuthor().getId(), p.isVisible());
     }
 
     private ProblemDetailDto toDetailDto(Problem p, List<TestCaseDto> publicTests) {
@@ -187,7 +254,7 @@ public class ProblemService {
                 .map(t -> new TagDto(t.getId(), t.getName()))
                 .collect(Collectors.toSet());
         return new ProblemDetailDto(p.getId(), p.getTitle(), p.getDescription(), p.getDifficulty(),
-                p.getTimeLimitMs(), p.getMemoryLimitMb(), tags, p.getCodeTemplate(), publicTests, p.isVisible());
+                p.getTimeLimitMs(), p.getMemoryLimitMb(), tags, p.getCodeTemplate(), publicTests, p.isVisible(), p.getAuthor().getId());
     }
 
     private TestCaseDto toTestCaseDto(com.stackr.api.entity.TestCase tc) {

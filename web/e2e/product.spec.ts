@@ -1,0 +1,322 @@
+import { test, expect, type Page } from '@playwright/test'
+import { readFileSync } from 'node:fs'
+const data = JSON.parse(readFileSync(new URL('./.state.json', import.meta.url), 'utf8'))
+const user = data.users
+const code = 'import java.util.*; public class Solution { public static void main(String[] args) { Scanner s = new Scanner(System.in); System.out.println(s.nextInt() + s.nextInt()); } }'
+async function login(page: Page, kind = 'student') {
+  await page.goto('/login')
+  await page.getByLabel('Логин', { exact: true }).fill(user[kind].name)
+  await page.getByLabel('Пароль', { exact: true }).fill(user[kind].password)
+  await page.getByRole('button', { name: 'Войти', exact: true }).click()
+  await expect(page).toHaveURL(/\/problems$/)
+}
+async function editCode(page: Page, source: string) {
+  const editor = page.locator('.monaco-editor textarea').first()
+  await expect(editor).toBeAttached()
+  await page.locator('.monaco-editor .view-lines').first().click({ position: { x: 70, y: 10 } })
+  await page.keyboard.press('ControlOrMeta+A'); await page.keyboard.insertText(source)
+  await expect.poll(() => page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('stackr_code_')).map(k => localStorage.getItem(k)))).toContain(source)
+}
+const auth = (kind: string) => ({ Authorization: 'Bearer ' + user[kind].token })
+
+test('wrong password stays on login and shows an error', async ({ page }) => {
+  await page.goto('/login'); await page.getByLabel('Логин').fill(user.student.name); await page.getByLabel('Пароль', { exact: true }).fill('incorrect-password')
+  await page.getByRole('button', { name: 'Войти', exact: true }).click()
+  await expect(page.getByRole('alert')).toBeVisible(); await expect(page.getByLabel('Логин')).toHaveValue(user.student.name)
+})
+test('registration, persistent session and logout work', async ({ page }) => {
+  await page.goto('/register'); const name = data.stamp + '_ui' + Date.now().toString(36)
+  await page.getByLabel('Имя пользователя').fill(name); await page.getByLabel('Email').fill(name + '@example.test')
+  await page.getByLabel('Пароль', { exact: true }).fill('QaPassword123!')
+  await page.getByRole('button', { name: 'Создать аккаунт', exact: true }).click(); await expect(page).toHaveURL(/\/problems$/)
+  await page.reload(); await expect(page.getByRole('button', { name: 'Выйти' })).toBeVisible()
+  await page.getByRole('button', { name: 'Выйти' }).click(); await page.goto('/profile'); await expect(page).toHaveURL(/\/login/)
+})
+test('organizer can discover own drafts and edit a task without publishing it', async ({ page }) => {
+  await login(page, 'org'); await expect(page.getByRole('link', { name: '+ Задача', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Мои задачи', exact: true }).click()
+  await expect(page.getByRole('link', { name: data.draft.title, exact: true })).toBeVisible()
+  await page.getByRole('link', { name: data.draft.title, exact: true }).click()
+  await page.getByRole('link', { name: 'Редактировать', exact: true }).click()
+  await page.getByPlaceholder('Название задачи').fill(data.draft.title + ' изменён')
+  await page.getByRole('button', { name: 'Сохранить изменения', exact: true }).click()
+  await expect(page.getByRole('heading', { name: data.draft.title + ' изменён', exact: true })).toBeVisible()
+})
+test('catalog combines search, difficulty and topic; empty state resets', async ({ page }) => {
+  await login(page)
+  await page.getByLabel('Поиск', { exact: true }).fill(data.stamp + ' Сумма')
+  await page.getByRole('combobox', { name: 'Сложность', exact: true }).selectOption('EASY')
+  await page.getByRole('combobox', { name: 'Тема', exact: true }).selectOption(String(data.tag.id))
+  await expect(page.getByRole('link', { name: data.problem.title, exact: true })).toBeVisible()
+  await page.getByLabel('Поиск', { exact: true }).fill('no-such-task-xyz')
+  await expect(page.getByRole('heading', { name: 'Ничего не нашлось' })).toBeVisible()
+  await page.getByRole('button', { name: 'Сбросить фильтры', exact: true }).click()
+  await expect(page.getByLabel('Поиск', { exact: true })).toHaveValue('')
+})
+test('Java editor runs custom input, persists draft and obtains real AC', async ({ page }) => {
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message))
+  await login(page); await page.goto(`/problems/${data.problem.id}`); await editCode(page, code)
+  const custom = page.locator('textarea').filter({ visible: true }).last()
+  await custom.fill('7 8')
+  await page.getByRole('button', { name: /Запустить/ }).click(); await expect(page.getByText('15', { exact: true })).toBeVisible({ timeout: 45000 })
+  await expect.poll(() => page.evaluate(key => localStorage.getItem(key), `stackr_code_${user.student.id}_${data.problem.id}`)).toBe(code)
+  await page.reload(); await page.getByRole('button', { name: /Отправить/ }).click()
+  await expect(page.getByText('Принято ✓', { exact: true }).first()).toBeVisible({ timeout: 60000 })
+  await page.screenshot({ path: 'test-results/screenshots/editor-desktop.png', fullPage: true }); expect(errors).toEqual([])
+})
+test('accepted task appears in solved filter and statistics', async ({ page }) => {
+  await login(page); await page.getByLabel('Поиск', { exact: true }).fill(data.stamp + ' Сумма')
+  await page.getByRole('combobox', { name: 'Прогресс', exact: true }).selectOption('true')
+  await expect(page.getByRole('link', { name: data.problem.title, exact: true })).toBeVisible()
+  await page.goto('/profile'); await expect(page.getByRole('heading', { name: user.student.name, exact: true })).toBeVisible()
+  await page.screenshot({ path: 'test-results/screenshots/profile.png', fullPage: true })
+})
+test('contest registers participant, preserves context and updates standings', async ({ page }) => {
+  await login(page); await page.goto(`/contests/${data.active.id}`)
+  await page.getByRole('button', { name: /Зарегистрироваться/ }).click()
+  await page.getByRole('link', { name: data.problem.title, exact: true }).click(); await expect(page).toHaveURL(/contestId=/)
+  await editCode(page, code); await page.getByRole('button', { name: /Отправить/ }).click()
+  await expect(page.getByText('Принято ✓', { exact: true }).first()).toBeVisible({ timeout: 60000 })
+  await page.goto(`/contests/${data.active.id}/standings`); await expect(page.getByRole('link', { name: user.student.name, exact: true })).toBeVisible()
+  await page.screenshot({ path: 'test-results/screenshots/standings.png', fullPage: true })
+})
+test('private invitation joins contest without exposing it in public list', async ({ page, request }) => {
+  await login(page); await page.goto(`/contests/invite/${data.private.inviteToken}`)
+  await page.getByRole('button', { name: /Принять|Присоединиться|Участвовать|Зарегистрироваться/ }).click()
+  await page.goto('/contests'); await expect(page.getByRole('heading', { name: data.private.title, exact: true })).not.toBeVisible()
+  await page.getByRole('button', { name: 'Мои контесты', exact: true }).click()
+  await expect(page.getByRole('heading', { name: data.private.title, exact: true })).toBeVisible()
+  const others = await (await request.get('/api/contests?mine=true', { headers: auth('otherorg') })).json()
+  expect(others.some((c: any) => c.id === data.private.id)).toBe(false)
+
+  await page.goto(`/contests/${data.private.id}`); await expect(page.getByRole('heading', { name: data.private.title, exact: true })).toBeVisible()
+})
+test('password change rejects old login and permits new login', async ({ page, request }) => {
+  await login(page, 'password'); await page.goto('/profile')
+  await page.getByLabel('Текущий пароль', { exact: true }).fill(user.password.password)
+  await page.getByLabel('Новый пароль', { exact: true }).fill('ChangedPassword123!')
+  await page.getByRole('button', { name: 'Сменить пароль', exact: true }).click()
+  await expect(page.getByText('Пароль успешно изменён ✓', { exact: true })).toBeVisible()
+  expect((await request.post('/api/auth/login', { data: { username: user.password.name, password: user.password.password } })).status()).toBe(401)
+  expect((await request.post('/api/auth/login', { data: { username: user.password.name, password: 'ChangedPassword123!' } })).ok()).toBeTruthy()
+})
+test('administrator blocks and restores access; role updates are enforced', async ({ page, request }) => {
+  await login(page, 'admin'); await page.goto('/admin')
+  await page.getByPlaceholder('Имя или email…').fill(user.victim.name)
+  const row = page.getByRole('row').filter({ hasText: user.victim.name })
+  await expect(row).toBeVisible(); await expect(row).toContainText('Активен')
+  await row.getByRole('button', { name: /Заблокировать/ }).click()
+  await expect(row.getByRole('button', { name: /Разблокировать/ })).toBeVisible()
+  expect((await request.get('/api/users/me', { headers: auth('victim') })).status()).toBe(401)
+  expect((await request.post('/api/auth/login', { data: { username: user.victim.name, password: user.victim.password } })).status()).toBe(401)
+  await row.getByRole('button', { name: /Разблокировать|Активировать/ }).click()
+  await expect.poll(async () => (await request.get('/api/users/me', { headers: auth('victim') })).status()).toBe(200)
+  await row.getByRole('combobox').selectOption('ORGANIZER')
+  await expect.poll(async () => (await (await request.get('/api/users/me', { headers: auth('victim') })).json()).role).toBe('ORGANIZER')
+})
+test('expired access session refreshes once and restores authenticated page', async ({ page }) => {
+  await login(page)
+  await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('stackr-auth')!); s.state.accessToken = 'expired-token'; localStorage.setItem('stackr-auth', JSON.stringify(s)) })
+  await page.reload(); await expect(page.getByRole('button', { name: 'Выйти', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Каждая задача — шаг вперёд' })).toBeVisible()
+})
+test('API authorization, UTC dates and retained history are correct', async ({ request }) => {
+  expect((await request.get(`/api/problems/${data.draft.id}`, { headers: auth('student') })).status()).toBe(403)
+  expect((await request.delete(`/api/problems/${data.problem.id}`, { headers: auth('otherorg') })).status()).toBe(403)
+  await expect((await request.get(`/api/problems/${data.problem.id}/testcases`, { headers: auth('otherorg') })).json()).resolves.toHaveLength(1)
+  const contest = await (await request.get(`/api/contests/${data.active.id}`, { headers: auth('org') })).json()
+  expect(contest.startTime).toMatch(/Z$/)
+  expect((await request.delete(`/api/problems/${data.problem.id}`, { headers: auth('org') })).status()).toBe(409)
+  await expect((await request.get(`/api/users/${user.student.id}`, { headers: auth('otherorg') })).json()).resolves.toMatchObject({ email: null })
+})
+test('mobile pages have no horizontal page overflow and editor remains usable', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 }); await login(page)
+  for (const path of ['/problems', '/contests', '/profile', `/problems/${data.problem.id}`]) {
+    await page.goto(path); await expect(page.getByRole('navigation')).toBeVisible()
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBeTruthy()
+  }
+  await expect(page.getByRole('button', { name: /Отправить/ })).toBeVisible()
+  await page.screenshot({ path: 'test-results/screenshots/editor-mobile.png', fullPage: true })
+})
+test('unknown route shows useful recovery action', async ({ page }) => {
+  await page.goto('/missing-page'); await expect(page.getByRole('heading', { name: 'Такой страницы нет' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'К задачам' })).toBeVisible()
+})
+
+test('organizer creates and publishes a task through the form with empty stdin', async ({ page }) => {
+  await login(page, 'org'); await page.goto('/problems/new')
+  const title = data.stamp + ' UI задача'
+  await page.getByPlaceholder('Например: Сумма двух чисел').fill(title)
+  await page.locator('textarea').first().fill('Выведите число 42. Ввод отсутствует.')
+  await page.getByPlaceholder('stdout', { exact: true }).first().fill('42')
+  await page.getByRole('checkbox').last().check()
+  await page.getByRole('button', { name: 'Создать задачу', exact: true }).click()
+  await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible()
+  await page.getByRole('link', { name: 'Тест-кейсы', exact: true }).click()
+  await page.getByRole('button', { name: /Добавить тест/ }).click()
+  await page.getByPlaceholder('stdin для программы...').fill('')
+  await page.getByPlaceholder('stdout от программы...').fill('')
+  await page.getByRole('button', { name: 'Добавить', exact: true }).click()
+  await expect(page.getByPlaceholder('stdin для программы...')).not.toBeVisible()
+})
+test('organizer creates a future contest and time survives edit roundtrip', async ({ page }) => {
+  await login(page, 'org'); await page.goto('/contests/new')
+  await page.getByPlaceholder('Например: Открытый чемпионат Stackr #2').fill(data.stamp + ' UI контест')
+  await page.getByText(data.problem.title, { exact: true }).click()
+  const start = await page.locator('input[type=datetime-local]').first().inputValue()
+  await page.getByRole('button', { name: 'Создать контест', exact: true }).click()
+  await expect(page.getByRole('heading', { name: data.stamp + ' UI контест', exact: true })).toBeVisible()
+  await page.getByRole('link', { name: 'Редактировать', exact: true }).click()
+  await expect(page.locator('input[type=datetime-local]').first()).toHaveValue(start)
+})
+test('future contest hides tasks from participants and rejects early submissions', async ({ page, request }) => {
+  await login(page); await page.goto(`/contests/${data.future.id}`)
+  await expect(page.getByRole('link', { name: data.problem.title, exact: true })).toHaveCount(0)
+  const r = await request.post('/api/submissions', { headers: auth('student'), data: { problemId: data.problem.id, contestId: data.future.id, sourceCode: code } })
+  expect(r.status()).toBe(422)
+})
+test('wrong answer unlocks the actual hint', async ({ page }) => {
+  await login(page); await page.goto(`/problems/${data.problem.id}`)
+  await editCode(page, 'public class Solution { public static void main(String[] a) { System.out.println(999); } }')
+  await page.getByRole('button', { name: /Отправить/ }).click()
+  await expect(page.getByText('Неверный ответ', { exact: true }).first()).toBeVisible({ timeout: 60000 })
+  await page.getByRole('button', { name: 'Подсказки', exact: true }).click()
+  await expect(page.getByText('QA: прочитайте оба числа одним Scanner', { exact: true })).toBeVisible()
+})
+test('admin can create and remove an unused topic through UI', async ({ page }) => {
+  await login(page, 'admin'); await page.goto('/admin')
+  const name = data.stamp + '_ui_topic'
+  await page.getByPlaceholder('Например, динамическое программирование').fill(name)
+  await page.getByRole('button', { name: 'Добавить тему', exact: true }).click()
+  const remove = page.getByRole('button', { name: 'Удалить тему ' + name, exact: true })
+  await expect(remove).toBeVisible(); await remove.click(); await expect(remove).not.toBeVisible()
+})
+test('catalog failure is recoverable with retry', async ({ page }) => {
+  await login(page)
+  await page.route('**/api/problems?**', route => route.fulfill({ status: 503, body: '{}' }))
+  await page.reload(); await expect(page.getByRole('heading', { name: 'Нет соединения', exact: true })).toBeVisible()
+  await page.unroute('**/api/problems?**'); await page.getByRole('button', { name: 'Повторить', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Нет соединения', exact: true })).not.toBeVisible()
+})
+
+test('roadmap shows Russian topics and links to the available catalog', async ({ page }) => {
+  await login(page); await page.goto('/learn')
+  await expect(page.getByRole('heading', { name: 'Роудмап по алгоритмам', exact: true })).toBeVisible()
+  await expect(page.getByText('Минимальные остовные деревья', { exact: true })).toBeVisible()
+  await page.screenshot({ path: 'test-results/screenshots/roadmap.png', fullPage: true })
+  await page.getByRole('link', { name: 'К задачам →', exact: true }).click()
+  await expect(page).toHaveURL(/\/problems$/)
+})
+test('two contestants have consistent ranks and wrong-answer penalties in both tables', async ({ request }) => {
+  await request.post(`/api/contests/${data.active.id}/register`, { headers: auth('opponent') })
+  const submit = async (source: string, expected: string) => {
+    const res = await request.post('/api/submissions', { headers: auth('opponent'), data: { problemId: data.problem.id, contestId: data.active.id, sourceCode: source } })
+    expect(res.status()).toBe(202); const s = await res.json()
+    await expect.poll(async () => (await (await request.get(`/api/submissions/${s.id}`, { headers: auth('opponent') })).json()).verdict, { timeout: 60000 }).toBe(expected)
+  }
+  await submit('public class Solution { public static void main(String[] a) { System.out.println(999); } }', 'WA')
+  await submit(code, 'AC'); await submit(code, 'AC')
+  const board = await (await request.get(`/api/contests/${data.active.id}/standings`, { headers: auth('student') })).json()
+  const old = await (await request.get(`/api/contests/${data.active.id}/leaderboard`, { headers: auth('student') })).json()
+  const student = board.rows.find((r: any) => r.userId === user.student.id)
+  const opponent = board.rows.find((r: any) => r.userId === user.opponent.id)
+  expect(student.solved).toBe(1); expect(opponent.solved).toBe(1); expect(opponent.rank).toBeGreaterThan(student.rank)
+  expect(opponent.cells[String(data.problem.id)].wrongBefore).toBe(1)
+  expect(old.map((r: any) => [r.userId, r.rank, r.penalty])).toEqual(board.rows.map((r: any) => [r.userId, r.rank, r.penalty]))
+  expect(old.find((r: any) => r.userId === user.opponent.id).score).toBe(100)
+  const analytics = await (await request.get(`/api/contests/${data.active.id}/analytics`, { headers: auth('org') })).json()
+  expect(analytics.participants.map((r: any) => r.userId)).toEqual(board.rows.map((r: any) => r.userId))
+})
+test('access and refresh tokens cannot be substituted for one another', async ({ request }) => {
+  expect((await request.post('/api/auth/refresh', { headers: { 'Content-Type': 'text/plain' }, data: user.student.token })).status()).toBe(401)
+  expect((await request.get('/api/users/me', { headers: { Authorization: 'Bearer ' + user.student.refresh } })).status()).toBe(401)
+})
+
+test('registration as organizer exposes author tools immediately', async ({ page }) => {
+  await page.goto('/register'); await page.getByRole('button', { name: /Организатор/ }).click()
+  const name = data.stamp + '_authorui'
+  await page.getByLabel('Имя пользователя').fill(name); await page.getByLabel('Email').fill(name + '@example.test')
+  await page.getByLabel('Пароль', { exact: true }).fill('QaPassword123!')
+  await page.getByRole('button', { name: 'Создать аккаунт', exact: true }).click()
+  await expect(page.getByRole('link', { name: '+ Задача', exact: true })).toBeVisible()
+})
+test('key screens have no automated WCAG A/AA accessibility violations', async ({ page }) => {
+  const { default: AxeBuilder } = await import('@axe-core/playwright')
+  const violations: unknown[] = []
+  for (const path of ['/', '/login', '/register']) {
+    await page.goto(path)
+    const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
+    violations.push(...result.violations.map(v => ({ page: path, id: v.id, nodes: v.nodes.map(n => n.target) })))
+  }
+  await login(page, 'org')
+  for (const path of ['/problems', '/problems/new', '/contests/new', '/profile', '/learn']) {
+    await page.goto(path); await expect(page.getByRole('navigation')).toBeVisible()
+    const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
+    violations.push(...result.violations.map(v => ({ page: path, id: v.id, nodes: v.nodes.map(n => n.target) })))
+  }
+  expect(violations).toEqual([])
+})
+
+test('login restores a protected deep link including contest query', async ({ page }) => {
+  const target = `/problems/${data.problem.id}?contestId=${data.active.id}`
+  await page.goto(target)
+  await expect(page).toHaveURL(url => url.pathname === '/login' && url.searchParams.get('redirect') === target)
+  await page.getByLabel('Логин', { exact: true }).fill(user.student.name)
+  await page.getByLabel('Пароль', { exact: true }).fill(user.student.password)
+  await page.getByRole('button', { name: 'Войти', exact: true }).click()
+  await expect(page).toHaveURL(url => url.pathname === `/problems/${data.problem.id}` && url.searchParams.get('contestId') === String(data.active.id))
+})
+test('another organizer invitation has clear role message without forbidden action', async ({ page }) => {
+  await login(page, 'otherorg'); await page.goto(`/contests/invite/${data.private.inviteToken}`)
+  await expect(page.getByText('Для участия нужен аккаунт участника.', { exact: false })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Посмотреть контест|Управлять контестом/ })).toHaveCount(0)
+})
+
+test('organizer can cancel then delete own task including tests and hints', async ({ page, request }) => {
+  const title = data.stamp + ' Удаление'
+  const response = await request.post('/api/problems', { headers: auth('org'), data: { title, description: 'Тест удаления', difficulty: 'EASY', timeLimitMs: 1000, memoryLimitMb: 256 } })
+  const p = await response.json(); expect(response.status()).toBe(201)
+  await request.post(`/api/problems/${p.id}/testcases`, { headers: auth('org'), data: { inputData: '', expectedOutput: '1', isPublic: true, orderIndex: 0 } })
+  await request.post(`/api/problems/${p.id}/hints`, { headers: auth('org'), data: { text: 'Подсказка', orderIndex: 0, unlocksAfterAttempts: 1 } })
+  expect((await request.delete(`/api/problems/${p.id}`, { headers: auth('otherorg') })).status()).toBe(403)
+  await login(page, 'org'); await page.goto('/problems?mine=true')
+  await page.getByLabel('Поиск', { exact: true }).fill(title)
+  await page.getByRole('button', { name: `Удалить ${title}`, exact: true }).click()
+  await expect(page.getByRole('region', { name: 'Подтверждение удаления задачи' })).toBeFocused()
+  await page.screenshot({ path: 'test-results/screenshots/delete-confirmation.png', fullPage: true })
+  await page.getByRole('button', { name: 'Отмена', exact: true }).click()
+  await expect(page.getByRole('link', { name: title, exact: true })).toBeVisible()
+  await page.getByRole('button', { name: `Удалить ${title}`, exact: true }).click()
+  await page.getByRole('button', { name: 'Подтвердить удаление', exact: true }).click()
+  await expect(page.getByText('Задача удалена', { exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: title, exact: true })).toHaveCount(0)
+  expect((await request.get(`/api/problems/${p.id}`, { headers: auth('org') })).status()).toBe(404)
+})
+test('task with history cannot be deleted and can be unpublished instead', async ({ page, request }) => {
+  await login(page, 'org'); await page.goto('/problems?mine=true')
+  await page.getByLabel('Поиск', { exact: true }).fill(data.problem.title)
+  await page.getByRole('button', { name: `Удалить ${data.problem.title}`, exact: true }).click()
+  await page.getByRole('button', { name: 'Подтвердить удаление', exact: true }).click()
+  await expect(page.getByRole('alert').filter({ hasText: 'Задача используется' })).toBeVisible()
+  await page.getByRole('button', { name: 'Снять с публикации', exact: true }).click()
+  await expect(page.getByText('Задача снята с публикации', { exact: true })).toBeVisible()
+  const result = await request.get(`/api/problems/${data.problem.id}`, { headers: auth('org') })
+  expect(result.status()).toBe(200); expect((await result.json()).visible).toBe(false)
+})
+test('own task can be removed from an ended contest without submissions', async ({ page, request }) => {
+  const title = data.stamp + ' Завершённый без посылок'
+  const p = await (await request.post('/api/problems', { headers: auth('org'), data: { title, description: 'Удаляемая задача', difficulty: 'EASY', timeLimitMs: 1000, memoryLimitMb: 256 } })).json()
+  const response = await request.post('/api/contests', { headers: auth('org'), data: {
+    title: data.stamp + ' Пустой архив', description: '', isPublic: false, problemIds: [p.id],
+    startTime: new Date(Date.now()-7200000).toISOString(), endTime: new Date(Date.now()-3600000).toISOString(),
+  } })
+  expect(response.status()).toBe(201); const contest = await response.json()
+  await login(page, 'org'); await page.goto('/problems?mine=true')
+  await page.getByLabel('Поиск', { exact: true }).fill(title)
+  await page.getByRole('button', { name: `Удалить ${title}`, exact: true }).click()
+  await page.getByRole('button', { name: 'Подтвердить удаление', exact: true }).click()
+  await expect(page.getByText('Задача удалена', { exact: true })).toBeVisible()
+  expect((await request.get(`/api/problems/${p.id}`, { headers: auth('org') })).status()).toBe(404)
+  const archived = await request.get(`/api/contests/${contest.id}`, { headers: auth('org') })
+  expect(archived.status()).toBe(200); expect((await archived.json()).problems).toHaveLength(0)
+})

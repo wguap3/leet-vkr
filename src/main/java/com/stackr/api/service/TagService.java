@@ -17,6 +17,7 @@ import java.util.List;
 public class TagService {
 
     private final TagRepository tagRepository;
+    private final com.stackr.api.repository.ProblemRepository problems;
 
     public List<TagDto> getAll() {
         return tagRepository.findAll().stream()
@@ -38,6 +39,7 @@ public class TagService {
         if (!tagRepository.existsById(id)) {
             throw new EntityNotFoundException("Tag not found: " + id);
         }
+        if (problems.usesTag(id)) throw new ConflictException("Тема используется в задачах. Сначала удалите её из этих задач.");
         tagRepository.deleteById(id);
     }
 }

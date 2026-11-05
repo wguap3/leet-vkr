@@ -20,14 +20,15 @@ import java.util.List;
 public class HintController {
 
     private final HintService hintService;
+    private final com.stackr.api.security.ProblemAccess access;
 
     /** Returns hints for the current user — locked ones have text=null */
     @GetMapping
+    @PreAuthorize("@problemAccess.canRead(#problemId, authentication)")
     public ResponseEntity<List<HintDto>> getHints(
             @PathVariable Long problemId,
             @AuthenticationPrincipal UserPrincipal principal) {
-        boolean isAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isAdmin = access.canManage(problemId, org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
         List<HintDto> hints = isAdmin
                 ? hintService.getHintsAdmin(problemId)
                 : hintService.getHintsForUser(problemId, principal.getId());
@@ -35,7 +36,7 @@ public class HintController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    @PreAuthorize("@problemAccess.canManage(#problemId, authentication)")
     public ResponseEntity<HintDto> create(
             @PathVariable Long problemId,
             @Valid @RequestBody CreateHintRequest req) {
@@ -44,11 +45,11 @@ public class HintController {
     }
 
     @DeleteMapping("/{hintId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    @PreAuthorize("@problemAccess.canManage(#problemId, authentication)")
     public ResponseEntity<Void> delete(
             @PathVariable Long problemId,
             @PathVariable Long hintId) {
-        hintService.deleteHint(hintId);
+        hintService.deleteHint(problemId, hintId);
         return ResponseEntity.noContent().build();
     }
 }

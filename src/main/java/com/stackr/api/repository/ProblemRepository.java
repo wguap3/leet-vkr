@@ -10,7 +10,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ProblemRepository extends JpaRepository<Problem, Long> {
+public interface ProblemRepository extends JpaRepository<Problem, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Problem> {
+
+    @Query("SELECT COUNT(p) > 0 FROM Problem p JOIN p.tags t WHERE t.id = :id")
+    boolean usesTag(@Param("id") Long id);
 
     Page<Problem> findByVisible(boolean visible, Pageable pageable);
 

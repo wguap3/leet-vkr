@@ -36,6 +36,7 @@ import static org.mockito.BDDMockito.*;
 @DisplayName("ProblemService — unit tests")
 class ProblemServiceTest {
 
+    @Mock com.stackr.api.repository.ContestRepository contestRepository;
     @Mock ProblemRepository problemRepository;
     @Mock UserRepository userRepository;
     @Mock TagRepository tagRepository;
@@ -64,7 +65,7 @@ class ProblemServiceTest {
         var page = new PageImpl<>(List.of(problem));
         given(problemRepository.findByFilters(null, null, null, PageRequest.of(0, 10))).willReturn(page);
         given(submissionRepository.countDistinctUsersByProblemIdsAndVerdict(anyList(), eq(Verdict.AC)))
-                .willReturn(List.of(new Object[]{10L, 5L}));
+                .willReturn(List.<Object[]>of(new Object[]{10L, 5L}));
         given(submissionRepository.findSolvedProblemIdsByUserIdAndProblemIds(eq(1L), anyList()))
                 .willReturn(List.of(10L));
 
@@ -170,6 +171,44 @@ class ProblemServiceTest {
                 .isInstanceOf(EntityNotFoundException.class);
     }
 
+    @Test
+    void deleteDetachesOwnEndedEmptyContest() {
+        given(problemRepository.findById(10L)).willReturn(Optional.of(problem));
+        var c = com.stackr.api.entity.Contest.builder().id(8L).title("Archive").organizer(author)
+                .endTime(java.time.LocalDateTime.now().minusDays(1)).problems(new java.util.ArrayList<>(List.of(problem))).build();
+        given(contestRepository.findContainingProblem(10L)).willReturn(List.of(c));
+        problemService.deleteProblem(10L, 1L);
+        assertThat(c.getProblems()).isEmpty();
+        then(contestRepository).should().flush();
+        then(problemRepository).should().deleteById(10L);
+    }
+
+    @Test
+    void deletePreservesEndedContestWithOtherSubmissions() {
+        given(problemRepository.findById(10L)).willReturn(Optional.of(problem));
+        var c = com.stackr.api.entity.Contest.builder().id(8L).title("Archive with history").organizer(author)
+                .endTime(java.time.LocalDateTime.now().minusDays(1)).problems(new java.util.ArrayList<>(List.of(problem))).build();
+        given(contestRepository.findContainingProblem(10L)).willReturn(List.of(c));
+        given(submissionRepository.existsByContestId(8L)).willReturn(true);
+        assertThatThrownBy(() -> problemService.deleteProblem(10L, 1L))
+                .isInstanceOf(com.stackr.api.exception.ConflictException.class).hasMessageContaining("Archive with history");
+        assertThat(c.getProblems()).containsExactly(problem);
+        then(problemRepository).should(never()).deleteById(any());
+    }
+
+    @Test
+    void deleteDoesNotChangeOtherOrganizersEndedContest() {
+        given(problemRepository.findById(10L)).willReturn(Optional.of(problem));
+        var other = User.builder().id(2L).role(Role.ORGANIZER).build();
+        var c = com.stackr.api.entity.Contest.builder().id(8L).title("Other archive").organizer(other)
+                .endTime(java.time.LocalDateTime.now().minusDays(1)).problems(new java.util.ArrayList<>(List.of(problem))).build();
+        given(contestRepository.findContainingProblem(10L)).willReturn(List.of(c));
+        assertThatThrownBy(() -> problemService.deleteProblem(10L, 1L))
+                .isInstanceOf(com.stackr.api.exception.ConflictException.class).hasMessageContaining("другого организатора").hasMessageNotContaining("Other archive");
+        assertThat(c.getProblems()).containsExactly(problem);
+        then(problemRepository).should(never()).deleteById(any());
+    }
+
     // ── setVisibility ─────────────────────────────────────────────────────────
 
     @Test
@@ -179,6 +218,8 @@ class ProblemServiceTest {
         given(problemRepository.findById(10L)).willReturn(Optional.of(problem));
         given(problemRepository.save(any())).willReturn(problem);
 
+        given(testCaseRepository.findByProblemIdOrderByOrderIndexAsc(10L))
+                .willReturn(List.of(com.stackr.api.entity.TestCase.builder().id(1L).build()));
         problemService.setVisibility(10L, true, 1L);
 
         assertThat(problem.isVisible()).isTrue();

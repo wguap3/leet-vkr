@@ -18,7 +18,7 @@ let isRefreshing = false
 let failedQueue: Array<{ resolve: (v: string) => void; reject: (e: unknown) => void }> = []
 
 function processQueue(error: unknown, token: string | null) {
-  failedQueue.forEach(p => { error ? p.reject(error) : p.resolve(token!) })
+  failedQueue.forEach(p => { if (error) p.reject(error); else p.resolve(token!) })
   failedQueue = []
 }
 
@@ -26,7 +26,7 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config
-    if (error.response?.status === 401 && !original._retry) {
+    if (error.response?.status === 401 && original && !original.url?.startsWith('/auth/') && !original._retry) {
       const { refreshToken, setTokens, logout } = useAuthStore.getState()
       if (!refreshToken) {
         logout()
@@ -34,6 +34,7 @@ api.interceptors.response.use(
         return Promise.reject(error)
       }
 
+      original._retry = true
       if (isRefreshing) {
         return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject })

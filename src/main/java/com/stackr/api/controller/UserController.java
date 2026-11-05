@@ -51,8 +51,9 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserProfileDto> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getProfile(id));
+    public ResponseEntity<UserProfileDto> getById(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
+        var profile = userService.getProfile(id);
+        return ResponseEntity.ok(id.equals(principal.getId()) || principal.getRole() == Role.ADMIN ? profile : profile.publicView());
     }
 
     @GetMapping("/leaderboard")
@@ -62,15 +63,16 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<UserDto>> getAllUsers(Pageable pageable) {
-        return ResponseEntity.ok(userService.getAllUsers(pageable));
+    public ResponseEntity<Page<UserDto>> getAllUsers(@RequestParam(required = false) String search, Pageable pageable) {
+        return ResponseEntity.ok(userService.searchUsers(search, pageable));
     }
 
     @PatchMapping("/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> changeRole(
             @PathVariable Long id,
-            @RequestParam Role role) {
+            @RequestParam Role role, @AuthenticationPrincipal UserPrincipal principal) {
+        if (id.equals(principal.getId()) && role != Role.ADMIN) throw new com.stackr.api.exception.ConflictException("Нельзя изменить собственную роль администратора");
         userService.changeRole(id, role);
         return ResponseEntity.ok().build();
     }
@@ -79,7 +81,8 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> setActive(
             @PathVariable Long id,
-            @RequestParam boolean active) {
+            @RequestParam boolean active, @AuthenticationPrincipal UserPrincipal principal) {
+        if (id.equals(principal.getId()) && !active) throw new com.stackr.api.exception.ConflictException("Нельзя заблокировать собственную учётную запись");
         userService.setActive(id, active);
         return ResponseEntity.ok().build();
     }

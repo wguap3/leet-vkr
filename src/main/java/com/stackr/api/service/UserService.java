@@ -48,12 +48,19 @@ public class UserService {
     @Transactional(readOnly = true)
     public Page<UserDto> getAllUsers(Pageable pageable) {
         return userRepository.findAll(pageable).map(u ->
-                new UserDto(u.getId(), u.getUsername(), u.getEmail(), u.getRole(), u.getRating(), u.getRegisteredAt()));
+                new UserDto(u.getId(), u.getUsername(), u.getEmail(), u.getRole(), u.getRating(), u.getRegisteredAt(), u.isActive()));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserDto> searchUsers(String search, Pageable pageable) {
+        if (search == null || search.isBlank()) return getAllUsers(pageable);
+        return userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(search.strip(), search.strip(), pageable)
+                .map(u -> new UserDto(u.getId(), u.getUsername(), u.getEmail(), u.getRole(), u.getRating(), u.getRegisteredAt(), u.isActive()));
     }
 
     private UserProfileDto toProfileDto(com.stackr.api.entity.User u, long totalAC, long totalSubs) {
         int rating = u.getRating() == null ? 0 : u.getRating();
-        return new UserProfileDto(u.getId(), u.getUsername(), u.getEmail(), u.getRole(),
+        return new UserProfileDto(u.getId(), u.getUsername(), null, u.getRole(),
                 rating, UserProfileDto.tierName(rating), UserProfileDto.tierIcon(rating),
                 u.getAvatarUrl(), u.getRegisteredAt(), totalAC, totalSubs);
     }
@@ -125,6 +132,9 @@ public class UserService {
     @Transactional
     public void changeRole(Long userId, Role role) {
         var user = findOrThrow(userId);
+        if (user.getRole() == Role.ADMIN && role != Role.ADMIN && userRepository.countByRoleAndActiveTrue(Role.ADMIN) <= 1) {
+            throw new BusinessException("Нельзя изменить роль последнего активного администратора");
+        }
         user.setRole(role);
         userRepository.save(user);
     }
@@ -132,6 +142,9 @@ public class UserService {
     @Transactional
     public void setActive(Long userId, boolean active) {
         var user = findOrThrow(userId);
+        if (!active && user.getRole() == Role.ADMIN && user.isActive() && userRepository.countByRoleAndActiveTrue(Role.ADMIN) <= 1) {
+            throw new BusinessException("Нельзя заблокировать последнего активного администратора");
+        }
         user.setActive(active);
         userRepository.save(user);
     }

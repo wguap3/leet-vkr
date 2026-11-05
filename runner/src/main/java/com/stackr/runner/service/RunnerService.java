@@ -24,10 +24,16 @@ public class RunnerService {
     private final DockerService dockerService;
 
     public RunResponse run(RunRequest req) {
+        dockerService.beginBudget(90000);
+        try { return judge(req); }
+        finally { dockerService.endBudget(); }
+    }
+
+    private RunResponse judge(RunRequest req) {
         if (req.testCases() == null || req.testCases().isEmpty()) {
             return RunResponse.builder()
                     .submissionId(req.submissionId())
-                    .verdict("CE")
+                    .verdict("ERROR")
                     .errorMessage("No test cases provided")
                     .build();
         }
@@ -40,8 +46,8 @@ public class RunnerService {
             log.error("Compile exception for submission {}: {}", req.submissionId(), e.getMessage());
             return RunResponse.builder()
                     .submissionId(req.submissionId())
-                    .verdict("CE")
-                    .errorMessage("Internal compile error: " + e.getMessage())
+                    .verdict("ERROR")
+                    .errorMessage("Compilation service unavailable")
                     .build();
         }
 
@@ -65,8 +71,8 @@ public class RunnerService {
                     log.error("runTest exception for submission {}: {}", req.submissionId(), e.getMessage());
                     return RunResponse.builder()
                             .submissionId(req.submissionId())
-                            .verdict("RE")
-                            .errorMessage("Internal runner error: " + e.getMessage())
+                            .verdict("ERROR")
+                            .errorMessage("Execution service unavailable")
                             .build();
                 }
 
@@ -106,7 +112,7 @@ public class RunnerService {
                     .submissionId(req.submissionId())
                     .verdict("AC")
                     .executionTimeMs(maxElapsedMs)
-                    .memoryUsedMb(req.memoryLimitMb() / 4)   // rough estimate
+                    .memoryUsedMb(null) // Memory usage is not measured; never fabricate it.
                     .build();
 
         } finally {

@@ -162,10 +162,10 @@ class RunnerServiceTest {
 
     @Test
     @DisplayName("run: пустой список тест-кейсов → CE")
-    void run_noTestCases_returnsCe() throws Exception {
+    void run_noTestCases_returnsInfrastructureError() throws Exception {
         RunResponse r = runnerService.run(req(List.of()));
 
-        assertThat(r.verdict()).isEqualTo("CE");
+        assertThat(r.verdict()).isEqualTo("ERROR");
         then(dockerService).should(never()).compile(any());
     }
 
@@ -180,7 +180,7 @@ class RunnerServiceTest {
 
         RunResponse r = runnerService.run(req(List.of(new TestCaseInput("in", "out"))));
 
-        assertThat(r.verdict()).isEqualTo("RE");
+        assertThat(r.verdict()).isEqualTo("ERROR");
         then(dockerService).should(times(1)).cleanup(FAKE_DIR);
     }
 }

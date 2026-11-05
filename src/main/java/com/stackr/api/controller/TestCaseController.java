@@ -21,18 +21,20 @@ import java.util.List;
 public class TestCaseController {
 
     private final TestCaseService testCaseService;
+    private final com.stackr.api.security.ProblemAccess problemAccess;
 
     @GetMapping
+    @PreAuthorize("@problemAccess.canRead(#problemId, authentication)")
     public ResponseEntity<List<TestCaseDto>> getAll(
             @PathVariable Long problemId,
             @AuthenticationPrincipal UserPrincipal principal) {
-        boolean showAll = principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ORGANIZER") || a.getAuthority().equals("ROLE_ADMIN"));
+        boolean showAll = problemAccess.canManage(problemId,
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
         return ResponseEntity.ok(testCaseService.getTestCases(problemId, showAll));
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    @PreAuthorize("@problemAccess.canManage(#problemId, authentication)")
     public ResponseEntity<TestCaseDto> create(
             @PathVariable Long problemId,
             @Valid @RequestBody CreateTestCaseRequest req) {
@@ -40,16 +42,16 @@ public class TestCaseController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    @PreAuthorize("@problemAccess.canManage(#problemId, authentication)")
     public ResponseEntity<TestCaseDto> update(
             @PathVariable Long problemId,
             @PathVariable Long id,
-            @RequestBody UpdateTestCaseRequest req) {
+            @Valid @RequestBody UpdateTestCaseRequest req) {
         return ResponseEntity.ok(testCaseService.update(problemId, id, req));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
+    @PreAuthorize("@problemAccess.canManage(#problemId, authentication)")
     public ResponseEntity<Void> delete(
             @PathVariable Long problemId,
             @PathVariable Long id) {

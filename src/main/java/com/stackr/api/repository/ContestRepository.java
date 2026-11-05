@@ -15,6 +15,18 @@ import java.util.Optional;
 @Repository
 public interface ContestRepository extends JpaRepository<Contest, Long> {
 
+    @Query("SELECT c FROM Contest c WHERE (:status IS NULL OR c.status = :status) AND " +
+           "(:admin = true OR c.isPublic = true OR c.organizer.id = :userId OR EXISTS " +
+           "(SELECT cp.id FROM ContestParticipation cp WHERE cp.contest = c AND cp.user.id = :userId)) " +
+           "ORDER BY c.startTime DESC, c.id DESC")
+    List<Contest> findAccessible(@Param("status") ContestStatus status, @Param("userId") Long userId, @Param("admin") boolean admin);
+
+    @Query("SELECT COUNT(c) > 0 FROM Contest c JOIN c.problems p WHERE p.id = :problemId")
+    boolean containsProblem(@Param("problemId") Long problemId);
+
+    @Query("SELECT DISTINCT c FROM Contest c JOIN c.problems p WHERE p.id = :problemId")
+    List<Contest> findContainingProblem(@Param("problemId") Long problemId);
+
     List<Contest> findByStatus(ContestStatus status);
 
     List<Contest> findByIsPublicTrue();

@@ -18,7 +18,7 @@ function toLocalInput(iso: string) {
 
 /** datetime-local value → ISO-like string for backend (no timezone suffix) */
 function toBackendDt(local: string) {
-  return new Date(local).toISOString().slice(0, 19)
+  return new Date(local).toISOString()
 }
 
 export default function EditContestPage() {
@@ -37,6 +37,8 @@ export default function EditContestPage() {
   // Form state
   const [title, setTitle]             = useState('')
   const [description, setDescription] = useState('')
+  const [originalStart, setOriginalStart] = useState('')
+  const [originalEnd, setOriginalEnd] = useState('')
   const [startTime, setStartTime]     = useState('')
   const [endTime, setEndTime]         = useState('')
   const [selectedProblems, setSelectedProblems] = useState<number[]>([])
@@ -47,10 +49,11 @@ export default function EditContestPage() {
   useEffect(() => {
     Promise.all([
       contestsApi.getContest(cid),
-      problemsApi.getProblems({ size: 200 }),
+      problemsApi.getProblems({ size: 200, mine: true }),
     ]).then(([{ data: contest }, { data: page }]) => {
       setTitle(contest.title)
       setDescription(contest.description ?? '')
+      setOriginalStart(contest.startTime); setOriginalEnd(contest.endTime)
       setStartTime(toLocalInput(contest.startTime))
       setEndTime(toLocalInput(contest.endTime))
       setSelectedProblems(contest.problems.map(p => p.id))
@@ -81,8 +84,8 @@ export default function EditContestPage() {
       await contestsApi.updateContest(cid, {
         title: title.trim(),
         description: description.trim(),
-        startTime: toBackendDt(startTime),
-        endTime: toBackendDt(endTime),
+        startTime: startTime === toLocalInput(originalStart) ? originalStart : toBackendDt(startTime),
+        endTime: endTime === toLocalInput(originalEnd) ? originalEnd : toBackendDt(endTime),
         problemIds: selectedProblems,
         isPublic,
       })
@@ -149,7 +152,7 @@ export default function EditContestPage() {
             <h3 className={styles.sectionTitle}>Основное</h3>
             <div className={styles.field}>
               <label>Название *</label>
-              <input
+              <input aria-label="Название *"
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Название контеста"
@@ -157,7 +160,7 @@ export default function EditContestPage() {
             </div>
             <div className={styles.field}>
               <label>Описание <span className={styles.hint}>(Markdown)</span></label>
-              <textarea
+              <textarea aria-label="Описание (Markdown)"
                 className={styles.textarea}
                 rows={4}
                 value={description}
@@ -168,7 +171,7 @@ export default function EditContestPage() {
             <div className={styles.row}>
               <div className={styles.field}>
                 <label>Начало *</label>
-                <input
+                <input aria-label="Начало *"
                   type="datetime-local"
                   value={startTime}
                   onChange={e => setStartTime(e.target.value)}
@@ -176,7 +179,7 @@ export default function EditContestPage() {
               </div>
               <div className={styles.field}>
                 <label>Конец *</label>
-                <input
+                <input aria-label="Конец *"
                   type="datetime-local"
                   value={endTime}
                   onChange={e => setEndTime(e.target.value)}

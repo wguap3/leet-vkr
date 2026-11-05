@@ -1,8 +1,8 @@
 import api from './client'
 import type { ContestAnalytics, ContestDetail, ContestShort, LeaderboardEntry } from '../types'
 
-export const getContests = (status?: string) =>
-  api.get<ContestShort[]>('/contests', { params: { status } })
+export const getContests = (status?: string, mine = false) =>
+  api.get<ContestShort[]>('/contests', { params: { status, mine } })
 
 export const getContest = (id: number) =>
   api.get<ContestDetail>(`/contests/${id}`)
@@ -45,3 +45,7 @@ export const getContestByInviteToken = (token: string) =>
 
 export const joinByInviteToken = (token: string) =>
   api.post<ContestDetail>(`/contests/invite/${token}/join`)
+
+export const removeParticipant = (contestId: number, userId: number) => api.delete(`/contests/${contestId}/participants/${userId}`)
+
+export const rotateInvite = (id: number) => api.post<ContestDetail>(`/contests/${id}/invite/rotate`)

@@ -31,14 +31,16 @@ public class ContestController {
     @GetMapping
     public ResponseEntity<List<ContestShortDto>> getAll(
             @RequestParam(required = false) ContestStatus status,
+            @RequestParam(defaultValue = "false") boolean mine,
             @AuthenticationPrincipal UserPrincipal principal) {
         Long uid = principal != null ? principal.getId() : null;
         boolean isOrganizerOrAdmin = principal != null &&
                 (principal.getRole() == Role.ORGANIZER || principal.getRole() == Role.ADMIN);
-        return ResponseEntity.ok(contestService.getContests(status, uid, isOrganizerOrAdmin));
+        return ResponseEntity.ok(contestService.getContests(status, uid, isOrganizerOrAdmin, mine));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@contestAccess.canRead(#id, authentication)")
     public ResponseEntity<ContestDetailDto> getById(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -52,6 +54,13 @@ public class ContestController {
             @AuthenticationPrincipal UserPrincipal principal) {
         Long uid = principal != null ? principal.getId() : null;
         return ResponseEntity.ok(contestService.getContestByInviteToken(token, uid));
+    }
+
+    @PostMapping("/{id}/invite/rotate")
+    @PreAuthorize("@contestAccess.canManage(#id, authentication)")
+    public ResponseEntity<ContestDetailDto> rotateInvite(@PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(contestService.rotateInviteToken(id, principal.getId()));
     }
 
     @PostMapping("/invite/{token}/join")
@@ -91,7 +100,7 @@ public class ContestController {
     }
 
     @PostMapping("/{id}/register")
-    @PreAuthorize("hasRole('CONTESTANT')")
+    @PreAuthorize("hasRole('CONTESTANT') and @contestAccess.canRead(#id, authentication)")
     public ResponseEntity<Void> register(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -99,26 +108,35 @@ public class ContestController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping("/{id}/participants/{userId}")
+    @PreAuthorize("@contestAccess.canManage(#id, authentication)")
+    public ResponseEntity<Void> removeParticipant(@PathVariable Long id, @PathVariable Long userId) {
+        contestService.removeParticipant(id, userId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}/leaderboard")
+    @PreAuthorize("@contestAccess.canRead(#id, authentication)")
     public ResponseEntity<List<LeaderboardEntryDto>> getLeaderboard(@PathVariable Long id) {
         return ResponseEntity.ok(contestService.getLeaderboard(id));
     }
 
     @GetMapping("/{id}/analytics")
-    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @PreAuthorize("@contestAccess.canManage(#id, authentication)")
     public ResponseEntity<ContestAnalyticsDto> getAnalytics(@PathVariable Long id) {
         return ResponseEntity.ok(contestService.getAnalytics(id));
     }
 
     @GetMapping("/{id}/submissions")
-    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @PreAuthorize("@contestAccess.canManage(#id, authentication)")
     public ResponseEntity<Page<SubmissionDto>> getSubmissions(
             @PathVariable Long id,
             Pageable pageable) {
-        return ResponseEntity.ok(submissionService.getByProblem(id, pageable));
+        return ResponseEntity.ok(submissionService.getByContest(id, pageable));
     }
 
     @GetMapping("/{id}/standings")
+    @PreAuthorize("@contestAccess.canRead(#id, authentication)")
     public ResponseEntity<ContestStandingsDto> getStandings(@PathVariable Long id) {
         return ResponseEntity.ok(contestService.getStandings(id));
     }

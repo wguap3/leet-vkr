@@ -11,7 +11,7 @@
 .lg  { padding: 6px 14px; font-size: 14px; }
 
 .icon   { font-size: 1.1em; line-height: 1; }
-.name   { color: var(--tier-color); }
+.name   { color: var(--text-1); }
 .rating {
   color: var(--text-3); font-weight: 400;
   padding-left: 2px; border-left: 1px solid var(--bg-4); margin-left: 2px;

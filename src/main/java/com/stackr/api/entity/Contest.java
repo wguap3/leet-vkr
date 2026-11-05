@@ -38,6 +38,7 @@ public class Contest {
     @Builder.Default
     private ContestStatus status = ContestStatus.UPCOMING;
 
+    @OrderBy("id ASC")
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "contest_problems",

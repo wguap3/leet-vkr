@@ -8,6 +8,6 @@ public record ChangePasswordRequest(
         String oldPassword,
 
         @NotBlank(message = "Новый пароль обязателен")
-        @Size(min = 6, message = "Пароль должен быть не менее 6 символов")
+        @Size(min = 8, max = 100, message = "Пароль должен содержать от 8 до 100 символов")
         String newPassword
 ) {}

@@ -32,14 +32,18 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String token = extractToken(request);
 
-        if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
-            Long userId = jwtUtil.getUserIdFromToken(token);
-            var userDetails = userDetailsService.loadUserById(userId);
-
-            var auth = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(auth);
+        if (StringUtils.hasText(token) && jwtUtil.validateToken(token) && JwtUtil.TYPE_ACCESS.equals(jwtUtil.getTokenType(token))) {
+            try {
+                Long userId = jwtUtil.getUserIdFromToken(token);
+                var userDetails = userDetailsService.loadUserById(userId);
+                if (userDetails.isEnabled()) {
+                    var auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
+            } catch (org.springframework.security.core.userdetails.UsernameNotFoundException | NumberFormatException ignored) {
+                SecurityContextHolder.clearContext();
+            }
         }
 
         chain.doFilter(request, response);

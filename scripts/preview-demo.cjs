@@ -1,0 +1,31 @@
+// Capture the actual clean local installation without creating QA content.
+const { chromium } = require('/app/node_modules/@playwright/test');
+const fs = require('fs');
+(async () => {
+  const data=JSON.parse(fs.readFileSync('/app/e2e/.demo-preview.json','utf8'));
+  const browser=await chromium.launch({headless:true});
+  const page=await browser.newPage({viewport:{width:1440,height:1000},locale:'ru-RU'});
+  await page.goto('http://web/login');
+  await page.getByLabel('Логин',{exact:true}).fill(data.username);
+  await page.getByLabel('Пароль',{exact:true}).fill(data.password);
+  await page.getByRole('button',{name:'Войти',exact:true}).click();
+  await page.waitForURL('http://web/problems');
+  await page.getByRole('link',{name:'Максимальная сумма подмассива',exact:true}).waitFor();
+  fs.mkdirSync('/app/test-results/presentation',{recursive:true});
+  await page.screenshot({path:'/app/test-results/presentation/catalog.png',fullPage:true});
+  await page.goto('http://web/contests');
+  await page.getByRole('heading',{name:'Алгоритмический старт',exact:true}).waitFor();
+  if(await page.getByRole('heading',{name:/qa_/}).count())throw Error('QA contest is public');
+  await page.screenshot({path:'/app/test-results/presentation/contests.png',fullPage:true});
+  await page.getByRole('link').filter({has:page.getByRole('heading',{name:'Алгоритмический старт',exact:true})}).click();
+  await page.getByText('Бессрочная тренировка · решайте в своём темпе',{exact:true}).waitFor();
+  if(await page.getByText('осталось',{exact:true}).count())throw Error('Timeless contest shows a countdown');
+  await page.screenshot({path:'/app/test-results/presentation/training.png',fullPage:true});
+  await page.goto('http://web/learn');
+  await page.getByText('Минимальные остовные деревья',{exact:true}).waitFor();
+  await page.screenshot({path:'/app/test-results/presentation/roadmap.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  if(!await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth))throw Error('Mobile page overflow');
+  await page.screenshot({path:'/app/test-results/presentation/roadmap-mobile.png',fullPage:true});
+  await browser.close();console.log('Clean catalog, one public contest, timeless UI and algorithm roadmap: OK');
+})().catch(e=>{console.error(e);process.exit(1)});

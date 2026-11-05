@@ -94,11 +94,11 @@ class UserServiceTest {
 
         // Batch mock: AC counts — [userId, acCount]
         given(submissionRepository.countDistinctSolvedByUserIdsAndVerdict(anyList(), eq(Verdict.AC)))
-                .willReturn(List.of(new Object[]{1L, 12L}, new Object[]{2L, 25L}));
+                .willReturn(List.<Object[]>of(new Object[]{1L, 12L}, new Object[]{2L, 25L}));
 
         // Batch mock: total submission counts — [userId, total]
         given(submissionRepository.countSubmissionsByUserIds(anyList()))
-                .willReturn(List.of(new Object[]{1L, 30L}, new Object[]{2L, 60L}));
+                .willReturn(List.<Object[]>of(new Object[]{1L, 30L}, new Object[]{2L, 60L}));
 
         var result = userService.getLeaderboard(PageRequest.of(0, 20));
 
@@ -143,7 +143,7 @@ class UserServiceTest {
     void getTopicProgress_mergesSolvedAndTotal() {
         // [tagId, tagName, count]
         given(submissionRepository.countSolvedPerTagByUserId(1L))
-                .willReturn(List.of(new Object[]{10L, "Arrays", 5L}));
+                .willReturn(List.<Object[]>of(new Object[]{10L, "Arrays", 5L}));
         given(submissionRepository.countProblemsPerTag())
                 .willReturn(List.of(
                         new Object[]{10L, "Arrays", 8L},
@@ -167,23 +167,23 @@ class UserServiceTest {
     @Test
     @DisplayName("changePassword: верный старый пароль → пароль обновляется")
     void changePassword_correctOldPassword_updatesHash() {
-        user.setPasswordHash("$2a$10$hashed");
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        alice.setPasswordHash("$2a$10$hashed");
+        given(userRepository.findById(1L)).willReturn(Optional.of(alice));
         given(passwordEncoder.matches("oldPass", "$2a$10$hashed")).willReturn(true);
         given(passwordEncoder.encode("newPass123")).willReturn("$2a$10$newHash");
         given(userRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
         userService.changePassword(1L, new ChangePasswordRequest("oldPass", "newPass123"));
 
-        assertThat(user.getPasswordHash()).isEqualTo("$2a$10$newHash");
-        then(userRepository).should().save(user);
+        assertThat(alice.getPasswordHash()).isEqualTo("$2a$10$newHash");
+        then(userRepository).should().save(alice);
     }
 
     @Test
     @DisplayName("changePassword: неверный старый пароль → BusinessException")
     void changePassword_wrongOldPassword_throwsBusiness() {
-        user.setPasswordHash("$2a$10$hashed");
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        alice.setPasswordHash("$2a$10$hashed");
+        given(userRepository.findById(1L)).willReturn(Optional.of(alice));
         given(passwordEncoder.matches("wrongPass", "$2a$10$hashed")).willReturn(false);
 
         assertThatThrownBy(() ->

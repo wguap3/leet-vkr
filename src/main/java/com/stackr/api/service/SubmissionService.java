@@ -1,6 +1,7 @@
 package com.stackr.api.service;
 
 import com.stackr.api.dto.request.RunCodeRequest;
+import java.time.LocalDateTime;
 import com.stackr.api.dto.request.SubmitRequest;
 import com.stackr.api.dto.response.RunCodeResult;
 import com.stackr.api.dto.response.SubmissionDto;
@@ -27,10 +28,11 @@ public class SubmissionService {
     private final ContestRepository contestRepository;
     private final UserRepository userRepository;
     private final SubmissionProcessor submissionProcessor;
+    private final ContestParticipationRepository participationRepository;
 
     @Transactional
     public SubmissionDto submit(SubmitRequest req, Long userId) {
-        var user = userRepository.findById(userId)
+        var user = userRepository.findForSubmission(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         var problem = problemRepository.findById(req.problemId())
                 .orElseThrow(() -> new EntityNotFoundException("Problem not found: " + req.problemId()));
@@ -39,11 +41,23 @@ public class SubmissionService {
         if (req.contestId() != null) {
             contest = contestRepository.findById(req.contestId())
                     .orElseThrow(() -> new EntityNotFoundException("Contest not found: " + req.contestId()));
-            if (contest.getStatus() == ContestStatus.FINISHED) {
+            if (contest.getStatus() == ContestStatus.FINISHED || !LocalDateTime.now().isBefore(contest.getEndTime())) {
                 throw new BusinessException("Contest has already finished");
+            }
+            if (LocalDateTime.now().isBefore(contest.getStartTime())) {
+                throw new BusinessException("Contest has not started");
+            }
+            if (!participationRepository.existsByUserIdAndContestId(userId, contest.getId())) {
+                throw new BusinessException("Register for the contest before submitting");
+            }
+            if (contest.getProblems().stream().noneMatch(p -> p.getId().equals(problem.getId()))) {
+                throw new BusinessException("Problem does not belong to this contest");
             }
         }
 
+        if (submissionRepository.countByUserIdAndVerdict(userId, Verdict.PENDING) >= 5) {
+            throw new BusinessException("У вас уже пять решений в очереди. Дождитесь результатов проверки.");
+        }
         var submission = Submission.builder()
                 .user(user)
                 .problem(problem)
@@ -53,22 +67,16 @@ public class SubmissionService {
                 .build();
         submission = submissionRepository.save(submission);
 
-        // Вызов через отдельный бин — @Async работает через Spring-прокси
-        submissionProcessor.processAsync(
-                submission.getId(),
-                problem.getId(),
-                problem.getTimeLimitMs(),
-                problem.getMemoryLimitMb()
-        );
-
+        // The database queue worker sees this row only after commit.
         return toDto(submission, userId, false);
     }
 
     @Transactional(readOnly = true)
-    public SubmissionDto getSubmission(Long id, Long currentUserId, boolean isOrganizer) {
+    public SubmissionDto getSubmission(Long id, Long currentUserId, boolean isAdmin) {
         var s = submissionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Submission not found: " + id));
-        boolean canSeeCode = isOrganizer || s.getUser().getId().equals(currentUserId);
+        boolean canSeeCode = isAdmin || s.getUser().getId().equals(currentUserId)
+                || s.getProblem().getAuthor().getId().equals(currentUserId);
         return toDto(s, currentUserId, !canSeeCode);
     }
 
@@ -101,6 +109,12 @@ public class SubmissionService {
                 .map(s -> toDto(s, null, false));
     }
 
+    @Transactional(readOnly = true)
+    public Page<SubmissionDto> getByContest(Long contestId, Pageable pageable) {
+        return submissionRepository.findByContestId(contestId, pageable)
+                .map(s -> toDto(s, null, false));
+    }
+
     private SubmissionDto toDto(Submission s, Long viewerId, boolean hideCode) {
         return new SubmissionDto(
                 s.getId(),
@@ -112,7 +126,8 @@ public class SubmissionService {
                 s.getExecutionTimeMs(),
                 s.getMemoryUsedMb(),
                 s.getSubmittedAt(),
-                hideCode ? null : s.getSourceCode()
+                hideCode ? null : s.getSourceCode(),
+                !hideCode && (s.getVerdict() == Verdict.CE || s.getVerdict() == Verdict.ERROR) ? s.getErrorMessage() : null
         );
     }
 }

@@ -7,27 +7,39 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint src --max-warnings 0",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.6.0",
+    "axios": "^1.7.2",
+    "clsx": "^2.1.1",
+    "monaco-editor": "^0.57.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.24.0",
-    "axios": "^1.7.2",
-    "@monaco-editor/react": "^4.6.0",
-    "zustand": "^4.5.4",
     "react-markdown": "^9.0.1",
+    "react-router-dom": "^7.18.5",
     "remark-gfm": "^4.0.0",
-    "clsx": "^2.1.1"
+    "zustand": "^4.5.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.6",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
+    "@vitejs/plugin-react": "^6.2.1",
+    "eslint": "^10.14.0",
     "typescript": "^5.4.5",
-    "vite": "^5.3.1",
-    "eslint": "^8.57.0",
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.14.1"
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.5"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "overrides": {
+    "dompurify": "3.4.17",
+    "minimatch": "11.0.4"
   }
 }

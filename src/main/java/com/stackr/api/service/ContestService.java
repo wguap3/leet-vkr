@@ -34,18 +34,18 @@ public class ContestService {
 
     @Transactional(readOnly = true)
     public List<ContestShortDto> getContests(ContestStatus status, Long userId, boolean isOrganizerOrAdmin) {
-        List<Contest> contests;
-        if (isOrganizerOrAdmin) {
-            // Organizers/Admins see all contests (including private)
-            contests = (status != null)
-                    ? contestRepository.findByStatus(status)
-                    : contestRepository.findAll();
-        } else {
-            // Regular users only see public contests
-            contests = (status != null)
-                    ? contestRepository.findByIsPublicTrueAndStatus(status)
-                    : contestRepository.findByIsPublicTrue();
-        }
+        return getContests(status, userId, isOrganizerOrAdmin, false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ContestShortDto> getContests(ContestStatus status, Long userId, boolean isOrganizerOrAdmin, boolean mine) {
+        boolean admin = userId != null && userRepository.findById(userId).map(u -> u.getRole() == Role.ADMIN).orElse(false);
+        Set<Long> joined = mine && userId != null
+                ? new HashSet<>(participationRepository.findContestIdsByUserId(userId)) : Set.of();
+        var contests = contestRepository.findAccessible(null, userId, admin).stream()
+                .filter(c -> effectiveStatus(c) != ContestStatus.FINISHED)
+                .filter(c -> mine ? (c.getOrganizer().getId().equals(userId) || joined.contains(c.getId())) : c.isPublic())
+                .filter(c -> status == null || effectiveStatus(c) == status).toList();
         if (contests.isEmpty()) return List.of();
 
         List<Long> ids = contests.stream().map(Contest::getId).toList();
@@ -74,10 +74,18 @@ public class ContestService {
     }
 
     @Transactional
+    public ContestDetailDto rotateInviteToken(Long id, Long userId) {
+        var contest = findOrThrow(id);
+        if (contest.isPublic()) throw new BusinessException("У публичного контеста нет приватной ссылки");
+        contest.setInviteToken(UUID.randomUUID().toString());
+        return toDetailDto(contest, false, userId);
+    }
+
+    @Transactional
     public ContestDetailDto registerByInviteToken(String token, Long userId) {
         var contest = contestRepository.findByInviteToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("Invalid invite link"));
-        if (contest.getStatus() == ContestStatus.FINISHED) {
+        if (!java.time.LocalDateTime.now().isBefore(contest.getEndTime())) {
             throw new BusinessException("Contest is already finished");
         }
         if (!participationRepository.existsByUserIdAndContestId(userId, contest.getId())) {
@@ -94,9 +102,10 @@ public class ContestService {
 
     @Transactional
     public ContestDetailDto createContest(CreateContestRequest req, Long organizerId) {
+        validateInterval(req.startTime(), req.endTime());
         var organizer = userRepository.findById(organizerId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
-        List<Problem> problems = resolveProblems(req.problemIds());
+        List<Problem> problems = resolveProblems(req.problemIds(), organizerId);
         boolean isPublic = req.isPublic() != null ? req.isPublic() : true;
         var contest = Contest.builder()
                 .title(req.title())
@@ -124,11 +133,28 @@ public class ContestService {
             }
         }
 
-        if (req.title() != null) contest.setTitle(req.title());
+        validateInterval(req.startTime() != null ? req.startTime() : contest.getStartTime(),
+                req.endTime() != null ? req.endTime() : contest.getEndTime());
+        boolean hasHistory = submissionRepository.existsByContestId(id);
+        if (hasHistory && ((req.startTime() != null && !req.startTime().equals(contest.getStartTime()))
+                || (req.endTime() != null && !req.endTime().equals(contest.getEndTime())))) {
+            throw new ConflictException("Нельзя менять время контеста после получения посылок");
+        }
+        if (req.title() != null) {
+            if (req.title().isBlank()) throw new BusinessException("Укажите название контеста");
+            contest.setTitle(req.title());
+        }
         if (req.description() != null) contest.setDescription(req.description());
         if (req.startTime() != null) contest.setStartTime(req.startTime());
         if (req.endTime() != null) contest.setEndTime(req.endTime());
-        if (req.problemIds() != null) contest.setProblems(resolveProblems(req.problemIds()));
+        if (req.problemIds() != null) {
+            var current = contest.getProblems().stream().map(Problem::getId).collect(Collectors.toSet());
+            var next = new HashSet<>(req.problemIds());
+            if (!current.equals(next)) {
+                if (hasHistory) throw new ConflictException("Нельзя менять набор задач после получения посылок");
+                contest.setProblems(resolveProblems(req.problemIds(), userId));
+            }
+        }
         if (req.isPublic() != null) {
             boolean wasPublic = contest.isPublic();
             boolean nowPublic = req.isPublic();
@@ -151,13 +177,15 @@ public class ContestService {
         if (!isAdmin && !contest.getOrganizer().getId().equals(requesterId)) {
             throw new BusinessException("You are not authorized to delete this contest");
         }
+        if (submissionRepository.existsByContestId(id)) throw new ConflictException("У контеста есть посылки. Историю результатов необходимо сохранить.");
+        participationRepository.deleteByContestId(id);
         contestRepository.deleteById(id);
     }
 
     @Transactional
     public void registerParticipant(Long contestId, Long userId) {
         var contest = findOrThrow(contestId);
-        if (contest.getStatus() == ContestStatus.FINISHED) {
+        if (!java.time.LocalDateTime.now().isBefore(contest.getEndTime())) {
             throw new BusinessException("Contest is already finished");
         }
         if (participationRepository.existsByUserIdAndContestId(userId, contestId)) {
@@ -172,74 +200,44 @@ public class ContestService {
         participationRepository.save(participation);
     }
 
+    @Transactional
+    public void removeParticipant(Long contestId, Long userId) {
+        findOrThrow(contestId);
+        var participation = participationRepository.findByUserIdAndContestId(userId, contestId)
+                .orElseThrow(() -> new EntityNotFoundException("Участник не найден"));
+        if (submissionRepository.existsByUserIdAndContestId(userId, contestId)) {
+            throw new ConflictException("У участника уже есть посылки. Нельзя удалить его результаты.");
+        }
+        participationRepository.delete(participation);
+    }
+
     @Transactional(readOnly = true)
     public List<LeaderboardEntryDto> getLeaderboard(Long contestId) {
-        var entries = participationRepository.findLeaderboard(contestId);
-        int rank = 1;
-        List<LeaderboardEntryDto> result = new ArrayList<>();
-        for (var cp : entries) {
-            result.add(new LeaderboardEntryDto(
-                    rank++,
-                    cp.getUser().getId(),
-                    cp.getUser().getUsername(),
-                    cp.getScore(),
-                    cp.getPenalty(),
-                    cp.getSubmissionCount()
-            ));
-        }
-        return result;
+        var standings = getStandings(contestId);
+        var attempts = submissionRepository.findAllByContestId(contestId).stream()
+                .filter(s -> s.getVerdict() != Verdict.PENDING && s.getVerdict() != Verdict.ERROR)
+                .collect(Collectors.groupingBy(s -> s.getUser().getId(), Collectors.counting()));
+        return standings.rows().stream().map(r -> new LeaderboardEntryDto(r.rank(), r.userId(), r.username(),
+                r.solved() * 100, r.penalty(), attempts.getOrDefault(r.userId(), 0L).intValue())).toList();
     }
 
     @Transactional(readOnly = true)
     public ContestAnalyticsDto getAnalytics(Long contestId) {
-        var contest = findOrThrow(contestId);
-        var submissions = submissionRepository.findAllByContestId(contestId);
-
-        List<ContestAnalyticsDto.ProblemHeader> problems = contest.getProblems().stream()
-                .map(p -> new ContestAnalyticsDto.ProblemHeader(p.getId(), p.getTitle()))
-                .toList();
-
-        Map<Long, String> userNames = new HashMap<>();
-        Map<Long, Map<Long, List<com.stackr.api.entity.Submission>>> grouped = new HashMap<>();
-
-        for (var s : submissions) {
-            Long uid = s.getUser().getId();
-            Long pid = s.getProblem().getId();
-            userNames.put(uid, s.getUser().getUsername());
-            grouped.computeIfAbsent(uid, k -> new HashMap<>())
-                   .computeIfAbsent(pid, k -> new ArrayList<>())
-                   .add(s);
-        }
-
-        List<ContestAnalyticsDto.ParticipantRow> rows = new ArrayList<>();
-        for (var entry : grouped.entrySet()) {
-            Long uid = entry.getKey();
+        var standings = getStandings(contestId);
+        var submissions = submissionRepository.findAllByContestId(contestId).stream()
+                .filter(s -> s.getVerdict() != Verdict.PENDING && s.getVerdict() != Verdict.ERROR).toList();
+        var headers = standings.problems().stream().map(p -> new ContestAnalyticsDto.ProblemHeader(p.id(), p.title())).toList();
+        var rows = standings.rows().stream().map(row -> {
             Map<Long, ContestAnalyticsDto.ProblemResult> results = new HashMap<>();
-            for (var pe : entry.getValue().entrySet()) {
-                Long pid = pe.getKey();
-                var subs = pe.getValue();
-                int attempts = subs.size();
-                boolean solved = subs.stream().anyMatch(s -> s.getVerdict() == com.stackr.api.entity.enums.Verdict.AC);
-                Integer firstAcMin = null;
-                if (solved) {
-                    var firstAc = subs.stream()
-                            .filter(s -> s.getVerdict() == com.stackr.api.entity.enums.Verdict.AC)
-                            .min(Comparator.comparing(com.stackr.api.entity.Submission::getSubmittedAt))
-                            .orElse(null);
-                    if (firstAc != null && contest.getStartTime() != null) {
-                        firstAcMin = (int) java.time.Duration.between(contest.getStartTime(), firstAc.getSubmittedAt()).toMinutes();
-                    }
-                }
-                results.put(pid, new ContestAnalyticsDto.ProblemResult(attempts, solved, firstAcMin));
+            for (var problem : standings.problems()) {
+                int attempts = (int) submissions.stream().filter(s -> s.getUser().getId().equals(row.userId())
+                        && s.getProblem().getId().equals(problem.id())).count();
+                var cell = row.cells().get(problem.id());
+                results.put(problem.id(), new ContestAnalyticsDto.ProblemResult(attempts, cell != null && cell.solved(), cell == null ? null : cell.solvedAt()));
             }
-            rows.add(new ContestAnalyticsDto.ParticipantRow(uid, userNames.get(uid), results));
-        }
-
-        rows.sort(Comparator.<ContestAnalyticsDto.ParticipantRow>comparingInt(r -> -r.results().values().stream()
-                        .mapToInt(pr -> pr.solved() ? 1 : 0).sum())
-                .thenComparing(r -> r.username()));
-
-        return new ContestAnalyticsDto(contestId, contest.getTitle(), problems, rows);
+            return new ContestAnalyticsDto.ParticipantRow(row.userId(), row.username(), results);
+        }).toList();
+        return new ContestAnalyticsDto(contestId, standings.contestTitle(), headers, rows);
     }
 
     @Transactional(readOnly = true)
@@ -301,7 +299,7 @@ public class ContestService {
                                     contest.getStartTime(), s.getSubmittedAt()).toMinutes();
                         }
                         break;
-                    } else if (s.getVerdict() != com.stackr.api.entity.enums.Verdict.PENDING) {
+                    } else if (s.getVerdict() != Verdict.PENDING && s.getVerdict() != Verdict.ERROR) {
                         wrongBefore++;
                     }
                 }
@@ -339,22 +337,39 @@ public class ContestService {
         return new ContestStandingsDto(contestId, contest.getTitle(), headers, ranked);
     }
 
+    private void validateInterval(java.time.LocalDateTime start, java.time.LocalDateTime end) {
+        if (start == null || end == null || !end.isAfter(start)) {
+            throw new BusinessException("Contest end time must be after start time");
+        }
+    }
+
     private Contest findOrThrow(Long id) {
         return contestRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Contest with id=" + id + " not found"));
     }
 
-    private List<Problem> resolveProblems(List<Long> ids) {
+    private List<Problem> resolveProblems(List<Long> ids, Long requesterId) {
         if (ids == null) return new ArrayList<>();
-        return ids.stream()
-                .map(pid -> problemRepository.findById(pid)
-                        .orElseThrow(() -> new EntityNotFoundException("Problem not found: " + pid)))
+        boolean admin = userRepository.findById(requesterId).map(u -> u.getRole() == Role.ADMIN).orElse(false);
+        return ids.stream().distinct()
+                .map(pid -> {
+                    var problem = problemRepository.findById(pid).orElseThrow(() -> new EntityNotFoundException("Problem not found: " + pid));
+                    if (!admin && !problem.isVisible() && !problem.getAuthor().getId().equals(requesterId)) {
+                        throw new BusinessException("Нельзя включить чужую неопубликованную задачу в контест");
+                    }
+                    return problem;
+                })
                 .collect(Collectors.toList());
+    }
+
+    private ContestStatus effectiveStatus(Contest c) {
+        var now = java.time.LocalDateTime.now();
+        return now.isBefore(c.getStartTime()) ? ContestStatus.UPCOMING : now.isBefore(c.getEndTime()) ? ContestStatus.RUNNING : ContestStatus.FINISHED;
     }
 
     private ContestShortDto toShortDto(Contest c, long participants) {
         return new ContestShortDto(c.getId(), c.getTitle(), c.getStartTime(), c.getEndTime(),
-                c.getStatus(), c.getProblems().size(), participants);
+                effectiveStatus(c), c.getProblems().size(), participants);
     }
 
     private ContestDetailDto toDetailDto(Contest c, boolean registered, Long userId) {
@@ -380,8 +395,13 @@ public class ContestService {
             inviteToken = c.getInviteToken();
         }
 
+        boolean author = c.getOrganizer().getId().equals(userId);
+        boolean admin = userId != null && userRepository.findById(userId).map(u -> u.getRole() == Role.ADMIN).orElse(false);
+        if (!author && !admin && (java.time.LocalDateTime.now().isBefore(c.getStartTime()) || (!c.isPublic() && !registered))) problems = List.of();
+        var now = java.time.LocalDateTime.now();
+        var actualStatus = now.isBefore(c.getStartTime()) ? ContestStatus.UPCOMING : now.isBefore(c.getEndTime()) ? ContestStatus.RUNNING : ContestStatus.FINISHED;
         return new ContestDetailDto(c.getId(), c.getTitle(), c.getDescription(),
-                c.getStartTime(), c.getEndTime(), c.getStatus(), problems, registered, c.isPublic(),
+                c.getStartTime(), c.getEndTime(), actualStatus, problems, registered, c.isPublic(),
                 inviteToken, c.getOrganizer().getId());
     }
 }

@@ -24,7 +24,7 @@ public class SubmissionController {
     private final SubmissionService submissionService;
 
     @PostMapping
-    @PreAuthorize("hasRole('CONTESTANT') or hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @PreAuthorize("(hasRole('CONTESTANT') or hasRole('ORGANIZER') or hasRole('ADMIN')) and @problemAccess.canRead(#req.problemId(), authentication)")
     public ResponseEntity<SubmissionDto> submit(
             @Valid @RequestBody SubmitRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -33,16 +33,17 @@ public class SubmissionController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@problemAccess.canReadSubmission(#id, authentication)")
     public ResponseEntity<SubmissionDto> getById(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
-        boolean isOrganizer = principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ORGANIZER") || a.getAuthority().equals("ROLE_ADMIN"));
-        return ResponseEntity.ok(submissionService.getSubmission(id, principal.getId(), isOrganizer));
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        return ResponseEntity.ok(submissionService.getSubmission(id, principal.getId(), isAdmin));
     }
 
     @PostMapping("/run")
-    @PreAuthorize("hasRole('CONTESTANT') or hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @PreAuthorize("(hasRole('CONTESTANT') or hasRole('ORGANIZER') or hasRole('ADMIN')) and @problemAccess.canRead(#req.problemId(), authentication)")
     public ResponseEntity<RunCodeResult> runCode(
             @Valid @RequestBody RunCodeRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -59,7 +60,7 @@ public class SubmissionController {
     }
 
     @GetMapping("/problem/{problemId}")
-    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @PreAuthorize("@problemAccess.canManage(#problemId, authentication)")
     public ResponseEntity<Page<SubmissionDto>> getByProblem(
             @PathVariable Long problemId,
             Pageable pageable) {

@@ -14,5 +14,6 @@ public record SubmissionDto(
         Integer executionTimeMs,
         Integer memoryUsedMb,
         LocalDateTime submittedAt,
-        String sourceCode   // null if not owner/ORGANIZER+
+        String sourceCode, // owner, problem author or administrator
+        String errorMessage // compilation diagnostics only; no hidden-test output
 ) {}

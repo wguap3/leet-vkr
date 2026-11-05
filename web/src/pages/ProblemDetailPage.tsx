@@ -1,6 +1,8 @@
+import { notify } from '../components/Toast'
 import { useEffect, useRef, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useSearchParams, Link } from 'react-router-dom'
 import Editor from '@monaco-editor/react'
+import '../monaco'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import * as problemsApi from '../api/problems'
@@ -19,13 +21,13 @@ public class Solution {
 }
 `
 
-const DIFF_LABELS: Record<string, string> = { EASY: 'Easy', MEDIUM: 'Medium', HARD: 'Hard' }
+const DIFF_LABELS: Record<string, string> = { EASY: 'Лёгкая', MEDIUM: 'Средняя', HARD: 'Сложная' }
 const VERDICT_LABELS: Record<string, string> = {
   AC: 'Принято ✓', WA: 'Неверный ответ', TLE: 'Превышено время',
-  RE: 'Ошибка выполнения', CE: 'Ошибка компиляции', PENDING: 'Проверяется...'
+  RE: 'Ошибка выполнения', CE: 'Ошибка компиляции', ERROR: 'Сбой проверки', PENDING: 'Проверяется...'
 }
 const STATUS_COLORS: Record<string, string> = {
-  OK: 'var(--green)', CE: 'var(--red)', TLE: 'var(--yellow)', RE: 'var(--red)'
+  ERROR: 'var(--yellow)', OK: 'var(--green)', CE: 'var(--red)', TLE: 'var(--yellow)', RE: 'var(--red)'
 }
 
 function VerdictBadge({ v }: { v: string }) {
@@ -50,11 +52,14 @@ function StatBar({ label, count, total, color }: { label: string; count: number;
 export default function ProblemDetailPage() {
   const { id } = useParams<{ id: string }>()
   const pid = Number(id)
+  const [searchParams] = useSearchParams()
+  const contestParam = Number(searchParams.get('contestId'))
+  const contestId = Number.isInteger(contestParam) && contestParam > 0 ? contestParam : undefined
   const { user } = useAuthStore()
-  const isOrganizer = user?.role === 'ORGANIZER' || user?.role === 'ADMIN'
-  const storageKey = `stackr_code_${id}`
+  const storageKey = `stackr_code_${user?.id}_${id}`
 
   const [problem, setProblem] = useState<ProblemDetail | null>(null)
+  const isOrganizer = user?.role === 'ADMIN' || (user?.role === 'ORGANIZER' && problem?.authorId === user.id)
   const [code, setCode] = useState(() => {
     try { return localStorage.getItem(storageKey) || DEFAULT_TEMPLATE } catch { return DEFAULT_TEMPLATE }
   })
@@ -85,13 +90,13 @@ export default function ProblemDetailPage() {
     if (tab !== 'submissions' || historyLoaded) return
     setHistoryLoading(true)
     import('../api/client').then(m =>
-      m.default.get<{ content: Submission[] }>(`/submissions/my?problemId=${pid}&size=20`)
+      m.default.get<{ content: Submission[] }>(`/submissions/my?problemId=${pid}&size=20&sort=submittedAt,desc${contestId ? `&contestId=${contestId}` : ''}`)
     ).then(({ data }) => {
       setSubmissionHistory(data.content)
       if (data.content.length > 0) setLastSubmission(data.content[0])
       setHistoryLoaded(true)
     }).catch(() => {}).finally(() => setHistoryLoading(false))
-  }, [tab, pid, historyLoaded])
+  }, [tab, pid, contestId, historyLoaded])
 
   // Autosave
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>()
@@ -99,28 +104,30 @@ export default function ProblemDetailPage() {
   const handleCodeChange = (v: string | undefined) => {
     const val = v ?? ''
     setCode(val)
-    setLastSubmission(null)   // сбрасываем устаревший вердикт при изменении кода
+
     setRunResult(null)
-    clearTimeout(autoSaveTimer.current)
-    autoSaveTimer.current = setTimeout(() => {
-      try { localStorage.setItem(storageKey, val) } catch {}
-    }, 800)
+    try { localStorage.setItem(storageKey, val) } catch {}
   }
 
   useEffect(() => {
+    let active = true
+    setLoading(true)
+    setLastSubmission(null)
+    setHistoryLoaded(false)
+    setSubmissionHistory([])
+    setHints([])
+    setStats(null)
     problemsApi.getProblem(pid)
       .then(({ data }) => {
+        if (!active) return
         setProblem(data)
-        // Only use template if no saved code in localStorage
-        try {
-          const saved = localStorage.getItem(storageKey)
-          if (!saved && data.codeTemplate) setCode(data.codeTemplate)
-        } catch {
-          if (data.codeTemplate) setCode(data.codeTemplate)
-        }
+        try { setCode(localStorage.getItem(storageKey) || data.codeTemplate || DEFAULT_TEMPLATE) }
+        catch { setCode(data.codeTemplate || DEFAULT_TEMPLATE) }
       })
-      .finally(() => setLoading(false))
-  }, [pid])
+      .catch(() => { if (active) setProblem(null) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [pid, storageKey])
 
   // Load hints when tab opened
   useEffect(() => {
@@ -147,32 +154,39 @@ export default function ProblemDetailPage() {
     return () => { clearInterval(pollInterval.current); clearTimeout(autoSaveTimer.current) }
   }, [])
 
+  // Continue polling long-running jobs and pending submissions restored from history.
+  useEffect(() => {
+    if (!lastSubmission || lastSubmission.verdict !== 'PENDING') return
+    let active = true
+    let busy = false
+    const submissionId = lastSubmission.id
+    const timer = setInterval(async () => {
+      if (busy) return
+      busy = true
+      try {
+        const { default: api } = await import('../api/client')
+        const { data } = await api.get<Submission>(`/submissions/${submissionId}`)
+        if (active && data.verdict !== 'PENDING') {
+          setLastSubmission(data)
+          api.get('/users/me').then(r => useAuthStore.getState().setUser(r.data)).catch(() => {})
+          setHints([])
+          setHistoryLoaded(false)
+        }
+      } catch { /* Retry transient network errors. */ }
+      finally { busy = false }
+    }, 1500)
+    return () => { active = false; clearInterval(timer) }
+  }, [lastSubmission?.id, lastSubmission?.verdict])
+
   const handleSubmit = async () => {
     setSubmitting(true)
     setTab('submissions')
     try {
-      const { data } = await problemsApi.submit(pid, code)
+      const { data } = await problemsApi.submit(pid, code, contestId)
       setLastSubmission(data)
-      let attempts = 0
-      clearInterval(pollInterval.current)
-      pollInterval.current = setInterval(async () => {
-        attempts++
-        try {
-          const { data: sub } = await import('../api/client').then(m =>
-            m.default.get(`/submissions/${data.id}`)
-          )
-          if (sub.verdict !== 'PENDING' || attempts > 20) {
-            clearInterval(pollInterval.current)
-            setLastSubmission(sub)
-            // Refresh hints after submission (unlock state may change)
-            setHints([])
-            // Refresh submission history
-            setHistoryLoaded(false)
-          }
-        } catch { clearInterval(pollInterval.current) }
-      }, 1500)
+
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Ошибка при отправке')
+      notify(err.response?.data?.message || 'Ошибка при отправке')
     } finally {
       setSubmitting(false)
     }
@@ -199,6 +213,7 @@ export default function ProblemDetailPage() {
       {/* ── Left panel ── */}
       <div className={styles.left}>
         <div className={styles.problemHeader}>
+          <div style={{ marginBottom: 12 }}><Link to={contestId ? `/contests/${contestId}` : '/problems'} className="muted">← {contestId ? 'К контесту' : 'К задачам'}</Link></div>
           <h2>{problem.title}</h2>
           <div className={styles.meta}>
             <span className={`badge badge-${problem.difficulty.toLowerCase()}`}>{DIFF_LABELS[problem.difficulty]}</span>
@@ -345,6 +360,7 @@ export default function ProblemDetailPage() {
                     <><span className="spinner" /><span style={{ fontSize: 13, color: 'var(--text-3)' }}>Проверяется...</span></>
                   )}
                 </div>
+                {lastSubmission.errorMessage && <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{lastSubmission.errorMessage}</pre>}
               </div>
             )}
 
@@ -414,6 +430,8 @@ export default function ProblemDetailPage() {
             onChange={handleCodeChange}
             theme="vs-dark"
             options={{
+              ariaLabel: 'Редактор Java',
+              wordWrap: 'on',
               fontSize: 14,
               fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
               fontLigatures: true,

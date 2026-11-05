@@ -19,3 +19,7 @@ jwt:
 
 runner:
   url: http://localhost:8081
+
+app:
+  judge:
+    enabled: false

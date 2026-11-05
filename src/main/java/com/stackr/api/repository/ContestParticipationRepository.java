@@ -12,6 +12,16 @@ import java.util.Optional;
 @Repository
 public interface ContestParticipationRepository extends JpaRepository<ContestParticipation, Long> {
 
+    @Query("SELECT COUNT(cp) > 0 FROM ContestParticipation cp JOIN cp.contest c JOIN c.problems p " +
+            "WHERE cp.user.id = :userId AND p.id = :problemId AND c.startTime <= :now")
+    boolean hasStartedContestProblem(@Param("userId") Long userId, @Param("problemId") Long problemId,
+                                    @Param("now") java.time.LocalDateTime now);
+
+    @Query("SELECT cp.contest.id FROM ContestParticipation cp WHERE cp.user.id = :userId")
+    List<Long> findContestIdsByUserId(@Param("userId") Long userId);
+
+    void deleteByContestId(Long contestId);
+
     Optional<ContestParticipation> findByUserIdAndContestId(Long userId, Long contestId);
 
     boolean existsByUserIdAndContestId(Long userId, Long contestId);

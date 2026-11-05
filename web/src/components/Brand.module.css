@@ -1,0 +1,2 @@
+.brand { display:inline-flex; align-items:center; gap:10px; color:#f4f6fb; font-size:24px; font-weight:750; letter-spacing:-.055em; line-height:1; white-space:nowrap; }
+.brand svg { flex:none; display:block; }

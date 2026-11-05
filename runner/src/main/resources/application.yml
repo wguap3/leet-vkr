@@ -8,3 +8,6 @@ server:
 logging:
   level:
     com.stackr.runner: DEBUG
+
+sandbox:
+  image: ${SANDBOX_IMAGE:eclipse-temurin:21-jdk-alpine}

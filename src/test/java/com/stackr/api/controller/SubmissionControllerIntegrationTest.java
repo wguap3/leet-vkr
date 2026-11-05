@@ -49,15 +49,15 @@ class SubmissionControllerIntegrationTest extends BaseIntegrationTest {
     // ── POST /api/submissions ─────────────────────────────────────────────────
 
     @Test
-    @DisplayName("[БЕЗОПАСНОСТЬ] POST /submissions — 403: ORGANIZER не может делать посылки")
-    void submit_asOrganizer_returns403() throws Exception {
+    @DisplayName("POST /submissions — 202: организатор может проверять решения")
+    void submit_asOrganizer_returns202() throws Exception {
         mockMvc.perform(post("/api/submissions")
                         .header("Authorization", bearer(organizerToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"problemId":%d,"sourceCode":"class Solution {}"}
                                 """.formatted(problem.getId())))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isAccepted());
     }
 
     @Test

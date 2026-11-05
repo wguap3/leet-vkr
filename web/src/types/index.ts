@@ -1,6 +1,6 @@
 export type Role = 'CONTESTANT' | 'ORGANIZER' | 'ADMIN'
 export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD'
-export type Verdict = 'PENDING' | 'AC' | 'WA' | 'TLE' | 'RE' | 'CE'
+export type Verdict = 'PENDING' | 'AC' | 'WA' | 'TLE' | 'RE' | 'CE' | 'ERROR'
 export type ContestStatus = 'UPCOMING' | 'RUNNING' | 'FINISHED'
 
 export interface Tag {
@@ -31,10 +31,13 @@ export interface ProblemShort {
   difficulty: Difficulty
   tags: Tag[]
   solvedCount: number
+  authorId: number
+  visible: boolean
   userVerdict: Verdict | null
 }
 
 export interface ProblemDetail {
+  authorId: number
   id: number
   title: string
   description: string
@@ -65,6 +68,7 @@ export interface Submission {
   executionTimeMs: number | null
   memoryUsedMb: number | null
   submittedAt: string
+  errorMessage?: string | null
   sourceCode?: string
 }
 

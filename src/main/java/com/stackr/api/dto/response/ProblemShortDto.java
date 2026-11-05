@@ -11,5 +11,11 @@ public record ProblemShortDto(
         Difficulty difficulty,
         Set<TagDto> tags,
         long solvedCount,
-        Verdict userVerdict
-) {}
+        Verdict userVerdict,
+        Long authorId,
+        boolean visible
+) {
+    public ProblemShortDto(Long id, String title, Difficulty difficulty, Set<TagDto> tags, long solvedCount, Verdict userVerdict) {
+        this(id, title, difficulty, tags, solvedCount, userVerdict, null, true);
+    }
+}

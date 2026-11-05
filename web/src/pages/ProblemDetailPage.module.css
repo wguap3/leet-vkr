@@ -1,4 +1,4 @@
-.layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); height: calc(100vh - 56px); overflow: hidden; }
+.layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); height: calc(100dvh - var(--nav-height)); overflow: hidden; }
 
 /* Left */
 .left { display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; background: var(--bg-2); }
@@ -96,3 +96,17 @@
 .statBarLabel { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; }
 .statBarTrack { height: 6px; background: var(--bg-4); border-radius: 99px; overflow: hidden; }
 .statBarFill { height: 100%; border-radius: 99px; transition: width .4s ease; }
+
+.layout { grid-template-columns:minmax(0,var(--statement-width,48%)) minmax(0,1fr); }
+.problemHeader { padding:24px 24px 0; } .problemHeader h2 { font-size:22px; }
+.description { font-size:15px; line-height:1.85; } .right { min-width:0; min-height:0; }
+.editorBar { min-height:58px; flex-wrap:wrap; gap:8px; } .editorWrap { flex:1 !important; min-height:200px; }
+.customTest { max-height:320px; overflow:auto; } .resultRow { flex-wrap:wrap; } .tabs { overflow-x:auto; white-space:nowrap; }
+@media(max-width:900px) {
+ .layout { display:flex; flex-direction:column; height:auto; overflow:visible; }
+ .left { min-height:440px; max-height:none; border-right:none; } .description,.submissionsPanel { max-height:640px; }
+ .right { min-height:680px; border-top:1px solid var(--border-2); } .editorWrap { min-height:400px; }
+ .problemHeader { padding:20px 16px 0; } .description,.submissionsPanel { padding:20px 16px; }
+ .customTestRow,.ioGrid { grid-template-columns:1fr; } .ioGrid>div+div { border-left:0; border-top:1px solid var(--border); }
+ .statsRow { grid-template-columns:repeat(2,1fr); }
+}
