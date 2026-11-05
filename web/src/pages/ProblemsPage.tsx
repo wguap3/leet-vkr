@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { notify } from '../components/Toast'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import * as problemsApi from '../api/problems'
 import { useAuthStore } from '../store/authStore'
@@ -23,6 +24,14 @@ export default function ProblemsPage() {
   const [total, setTotal] = useState(0)
   const [input, setInput] = useState('')
   const [search, setSearch] = useState('')
+  const deletePanel = useRef<HTMLElement>(null)
+  const [deleting, setDeleting] = useState<ProblemShort | null>(null)
+  useEffect(() => {
+    if (deleting) { deletePanel.current?.scrollIntoView({ block: 'center' }); deletePanel.current?.focus({ preventScroll: true }) }
+  }, [deleting])
+  const [busy, setBusy] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+  const [canHide, setCanHide] = useState(false)
   const [retry, setRetry] = useState(0)
   useEffect(() => { setTagId(params.get('tagId') || ''); setPage(0) }, [params])
   useEffect(() => { problemsApi.getTags().then(r => setTags(r.data)).catch(() => {}) }, [])
@@ -37,6 +46,21 @@ export default function ProblemsPage() {
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [difficulty, tagId, solved, mine, search, page, retry])
+  const remove = async (hide = false) => {
+    if (!deleting) return
+    setBusy(true); setDeleteError('')
+    try {
+      if (hide) await problemsApi.setVisible(deleting.id, false)
+      else await problemsApi.deleteProblem(deleting.id)
+      setDeleting(null); setCanHide(false)
+      notify(hide ? 'Задача снята с публикации' : 'Задача удалена')
+      if (!hide && problems.length === 1 && page > 0) setPage(n => n - 1)
+      else setRetry(n => n + 1)
+    } catch (err: any) {
+      setCanHide(err.response?.status === 409 && !!deleting.visible)
+      setDeleteError(err.response?.data?.message || 'Не удалось удалить задачу. Попробуйте снова.')
+    } finally { setBusy(false) }
+  }
   const reset = () => { setInput(''); setDifficulty(''); setTagId(''); setSolved(''); setPage(0) }
   const filtered = input || difficulty || tagId || solved
   return <div className="page-container">
@@ -56,6 +80,16 @@ export default function ProblemsPage() {
       <label>Прогресс<select value={solved} onChange={e => { setSolved(e.target.value); setPage(0) }}><option value="">Все задачи</option><option value="true">Решённые</option><option value="false">Не решённые</option></select></label>
       {filtered && <button className="btn btn-ghost" onClick={reset}>Сбросить</button>}
     </div>
+    {mine && deleting && <section ref={deletePanel} tabIndex={-1} className="card" aria-label="Подтверждение удаления задачи" style={{ padding:20, marginBottom:20 }}>
+      <h2 style={{ fontSize:18 }}>Удалить «{deleting.title}»?</h2>
+      <p className="page-description">Условие, тесты и подсказки будут удалены без возможности восстановления. Задачи с посылками или участием в контестах защищены от удаления.</p>
+      {deleteError && <p role="alert" style={{ color:'var(--red)', marginTop:12 }}>{deleteError}</p>}
+      <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginTop:16 }}>
+        <button className="btn btn-outline" disabled={busy} onClick={() => { setDeleting(null); setDeleteError(''); setCanHide(false) }}>Отмена</button>
+        {canHide ? <button className="btn btn-primary" disabled={busy} onClick={() => remove(true)}>Снять с публикации</button> :
+          <button className="btn btn-primary" disabled={busy} onClick={() => remove()}>{busy ? 'Удаляем…' : 'Подтвердить удаление'}</button>}
+      </div>
+    </section>}
     <div className="card table-scroll" aria-busy={loading}>
       {error ? <div className="empty-state" role="alert"><h2>Нет соединения</h2><p>{error}</p><button className="btn btn-secondary" onClick={() => setRetry(n => n + 1)}>Повторить</button></div>
       : loading ? <div className="empty-state" role="status"><span className="spinner" />Загружаем задачи…</div>
@@ -65,7 +99,7 @@ export default function ProblemsPage() {
         <td><span className={`badge badge-${p.difficulty.toLowerCase()}`}>{levels[p.difficulty]}</span></td>
         <td><div className={styles.tags}>{p.tags.slice(0, 3).map(t => <span className={styles.tag} key={t.id}>{t.name}</span>)}</div></td>
         <td className="muted">{p.solvedCount}</td><td>{mine ? <span className={`badge ${p.visible ? 'badge-ac' : 'badge-pending'}`}>{p.visible ? 'Опубликована' : 'Черновик'}</span> : p.userVerdict === 'AC' ? <span className="badge badge-ac">✓ Решена</span> : <span className="muted">Не решена</span>}</td>
-        {mine && <td><Link className="btn btn-outline btn-sm" to={`/problems/${p.id}/edit`}>Изменить</Link></td>}
+        {mine && <td><div style={{ display:'flex', gap:8 }}><Link className="btn btn-outline btn-sm" to={`/problems/${p.id}/edit`}>Изменить</Link><button className="btn btn-outline btn-sm" aria-label={`Удалить ${p.title}`} disabled={busy} onClick={() => { setDeleting(p); setDeleteError(''); setCanHide(false) }}>Удалить</button></div></td>}
       </tr>)}</tbody></table>}
     </div>
     {totalPages > 1 && <div className={styles.pagination}><button className="btn btn-outline" disabled={page === 0} onClick={() => setPage(n => n - 1)}>← Назад</button><span className="muted">{page + 1} / {totalPages}</span><button className="btn btn-outline" disabled={page >= totalPages - 1} onClick={() => setPage(n => n + 1)}>Далее →</button></div>}

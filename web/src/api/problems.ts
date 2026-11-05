@@ -74,3 +74,5 @@ export const updateProblem = (id: number, data: {
 
 export const getHintsFull = (problemId: number) =>
   api.get<import('../types').Hint[]>(`/problems/${problemId}/hints`)
+
+export const deleteProblem = (id: number) => api.delete(`/problems/${id}`)
