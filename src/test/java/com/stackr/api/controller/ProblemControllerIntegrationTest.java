@@ -101,8 +101,8 @@ class ProblemControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    @DisplayName("[БЕЗОПАСНОСТЬ] DELETE /problems/{id} — 403: ORGANIZER не может удалять (только ADMIN)")
-    void deleteProblem_asOrganizer_returns403() throws Exception {
+    @DisplayName("DELETE /problems/{id}: автор может удалять свою задачу")
+    void deleteProblem_asOwner_returns204() throws Exception {
         // Создаём organizer
         String token = registerAndLogin("org", "org@example.com", "password123");
         User organizer = userRepository.findByUsername("org").orElseThrow();
@@ -117,7 +117,7 @@ class ProblemControllerIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(delete("/api/problems/" + problem.getId())
                         .header("Authorization", bearer(orgToken)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNoContent());
     }
 
     // ── вспомогательный логин без регистрации ─────────────────────────────────

@@ -45,3 +45,7 @@ export const getContestByInviteToken = (token: string) =>
 
 export const joinByInviteToken = (token: string) =>
   api.post<ContestDetail>(`/contests/invite/${token}/join`)
+
+export const removeParticipant = (contestId: number, userId: number) => api.delete(`/contests/${contestId}/participants/${userId}`)
+
+export const rotateInvite = (id: number) => api.post<ContestDetail>(`/contests/${id}/invite/rotate`)

@@ -1,3 +1,4 @@
+import Brand from './Brand'
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
@@ -29,7 +30,7 @@ export default function Navbar() {
 
   // Poll for unread notifications every 5s when authenticated
   useEffect(() => {
-    if (!auth) return
+    if (!auth) { setNotifications([]); setOpen(false); return }
     const fetchNotifications = () => {
       getUnreadNotifications()
         .then(res => setNotifications(res.data.slice(0, 10)))
@@ -38,7 +39,7 @@ export default function Navbar() {
     fetchNotifications()
     const interval = setInterval(fetchNotifications, 5000)
     return () => clearInterval(interval)
-  }, [auth])
+  }, [auth, user?.id])
 
   const handleBellClick = async () => {
     if (open) {
@@ -69,27 +70,18 @@ export default function Navbar() {
     <nav className={styles.nav}>
       <div className={styles.inner}>
         <Link to="/" className={styles.logo}>
-          <svg className={styles.logoIcon} width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="1" y="1" width="20" height="20" rx="5" fill="url(#logo-grad)" />
-            <path d="M14.5 4.5L8 11H13L7.5 17.5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-            <defs>
-              <linearGradient id="logo-grad" x1="1" y1="1" x2="21" y2="21" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#8b5cf6"/>
-                <stop offset="1" stopColor="#6d28d9"/>
-              </linearGradient>
-            </defs>
-          </svg>
-          Stackr
+          <Brand />
         </Link>
 
         <div className={styles.links}>
           {auth && <>
             <NavLink to="/problems" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Задачи</NavLink>
+            <NavLink to="/learn" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Треки</NavLink>
             <NavLink to="/contests" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Контесты</NavLink>
             <NavLink to="/leaderboard" className={({ isActive }) => isActive ? styles.linkActive : styles.link}>Рейтинг</NavLink>
             {canCreate && (
               <div className={styles.createGroup}>
-                {isAdmin && <Link to="/problems/new" className={styles.createLink}>+ Задача</Link>}
+                {canCreate && <Link to="/problems/new" className={styles.createLink}>+ Задача</Link>}
                 <Link to="/contests/new" className={styles.createLink}>+ Контест</Link>
               </div>
             )}
@@ -113,7 +105,7 @@ export default function Navbar() {
                 <button
                   className={styles.bellBtn}
                   onClick={handleBellClick}
-                  title="Уведомления"
+                  title="Уведомления" aria-label="Уведомления" aria-expanded={open}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>

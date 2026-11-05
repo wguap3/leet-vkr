@@ -17,6 +17,9 @@ public record UserProfileDto(
         long totalAC,
         long totalSubmissions
 ) {
+    public UserProfileDto publicView() {
+        return new UserProfileDto(id, username, null, role, rating, ratingTier, ratingTierIcon, avatarUrl, registeredAt, totalAC, totalSubmissions);
+    }
     /** Derive tier from rating value. */
     public static String tierName(int rating) {
         if (rating >= 2000) return "Мастер";

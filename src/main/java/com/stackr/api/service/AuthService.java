@@ -49,7 +49,7 @@ public class AuthService {
     public TokenResponse login(LoginRequest req) {
         var user = userRepository.findByUsername(req.username())
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
-        if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
+        if (!user.isActive() || !passwordEncoder.matches(req.password(), user.getPasswordHash())) {
             throw new BadCredentialsException("Invalid credentials");
         }
         return buildTokenResponse(user);
@@ -57,12 +57,13 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public TokenResponse refresh(String refreshToken) {
-        if (!jwtUtil.validateToken(refreshToken)) {
+        if (!jwtUtil.validateToken(refreshToken) || !com.stackr.api.security.JwtUtil.TYPE_REFRESH.equals(jwtUtil.getTokenType(refreshToken))) {
             throw new BadCredentialsException("Invalid or expired refresh token");
         }
         Long userId = jwtUtil.getUserIdFromToken(refreshToken);
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        if (!user.isActive()) throw new BadCredentialsException("Account is disabled");
         return buildTokenResponse(user);
     }
 
@@ -73,6 +74,6 @@ public class AuthService {
     }
 
     private UserDto toDto(User u) {
-        return new UserDto(u.getId(), u.getUsername(), u.getEmail(), u.getRole(), u.getRating(), u.getRegisteredAt());
+        return new UserDto(u.getId(), u.getUsername(), u.getEmail(), u.getRole(), u.getRating(), u.getRegisteredAt(), u.isActive());
     }
 }

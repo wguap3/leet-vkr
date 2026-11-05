@@ -1,10 +1,15 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import Toast from './components/Toast'
+import ErrorBoundary from './components/ErrorBoundary'
+import { getMe } from './api/auth'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ProblemsPage from './pages/ProblemsPage'
-import ProblemDetailPage from './pages/ProblemDetailPage'
+import LearnPage from './pages/LearnPage'
+import { lazy, Suspense, useEffect } from 'react'
+const ProblemDetailPage = lazy(() => import('./pages/ProblemDetailPage'))
 import ContestsPage from './pages/ContestsPage'
 import ContestDetailPage from './pages/ContestDetailPage'
 import ProfilePage from './pages/ProfilePage'
@@ -43,13 +48,19 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const { accessToken, setUser } = useAuthStore()
+  useEffect(() => { if (accessToken) getMe().then(r => setUser(r.data)).catch(() => {}) }, [accessToken, setUser])
   return (
     <BrowserRouter>
-      <Navbar />
+      <a className="skip-link" href="#main-content">Перейти к содержимому</a>
+      <Navbar /><Toast />
+      <main id="main-content"><ErrorBoundary>
+      <Suspense fallback={<div className="empty-state" role="status"><span className="spinner" />Загрузка страницы…</div>}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/learn" element={<ProtectedRoute><LearnPage /></ProtectedRoute>} />
         <Route path="/problems" element={<ProtectedRoute><ProblemsPage /></ProtectedRoute>} />
         <Route path="/problems/new" element={<OrganizerRoute><CreateProblemPage /></OrganizerRoute>} />
         <Route path="/problems/:id/edit" element={<OrganizerRoute><EditProblemPage /></OrganizerRoute>} />
@@ -66,7 +77,10 @@ export default function App() {
         <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
         <Route path="/problems/:id/testcases" element={<OrganizerRoute><TestCasesPage /></OrganizerRoute>} />
         <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
+        <Route path="*" element={<div className="empty-state"><p className="eyebrow">404</p><h1>Такой страницы нет</h1><p>Вернитесь в каталог и выберите следующую задачу.</p><a href="/problems" className="btn btn-primary">К задачам</a></div>} />
       </Routes>
+      </Suspense>
+      </ErrorBoundary></main>
     </BrowserRouter>
   )
 }

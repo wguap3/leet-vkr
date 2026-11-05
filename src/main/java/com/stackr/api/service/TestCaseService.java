@@ -59,6 +59,9 @@ public class TestCaseService {
         var tc = testCaseRepository.findById(id)
                 .filter(t -> t.getProblem().getId().equals(problemId))
                 .orElseThrow(() -> new EntityNotFoundException("TestCase not found: " + id));
+        if (tc.getProblem().isVisible() && testCaseRepository.findByProblemIdOrderByOrderIndexAsc(problemId).size() <= 1) {
+            throw new com.stackr.api.exception.ConflictException("Нельзя удалить последний тест опубликованной задачи. Сначала снимите задачу с публикации.");
+        }
         testCaseRepository.delete(tc);
     }
 

@@ -16,6 +16,16 @@ import java.util.Optional;
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM Submission s WHERE s.verdict = :verdict ORDER BY s.submittedAt ASC, s.id ASC")
+    List<Submission> findPendingForProcessing(@Param("verdict") Verdict verdict, Pageable pageable);
+
+
+    boolean existsByUserIdAndContestId(Long userId, Long contestId);
+    boolean existsByContestId(Long contestId);
+    boolean existsByProblemId(Long problemId);
+    long countByUserIdAndVerdict(Long userId, Verdict verdict);
+
     Page<Submission> findByUserId(Long userId, Pageable pageable);
 
     @Query("SELECT s FROM Submission s WHERE s.user.id = :userId " +
@@ -61,7 +71,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countDistinctSolvedByUserId(@Param("userId") Long userId, @Param("verdict") Verdict verdict);
 
     /** Count wrong (non-AC) submissions by user on a specific problem */
-    @Query("SELECT COUNT(s) FROM Submission s WHERE s.user.id = :userId AND s.problem.id = :problemId AND s.verdict <> 'AC'")
+    @Query("SELECT COUNT(s) FROM Submission s WHERE s.user.id = :userId AND s.problem.id = :problemId AND s.verdict IN ('WA', 'TLE', 'RE', 'CE')")
     long countWrongByUserIdAndProblemId(@Param("userId") Long userId, @Param("problemId") Long problemId);
 
     /** Verdict distribution for a problem: returns list of [verdict, count] */
@@ -83,7 +93,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
         FROM Submission s
         JOIN s.problem p
         JOIN p.tags t
-        WHERE s.user.id = :userId AND s.verdict = 'AC'
+        WHERE s.user.id = :userId AND s.verdict = 'AC' AND p.visible = true
         GROUP BY t.id, t.name
         """)
     List<Object[]> countSolvedPerTagByUserId(@Param("userId") Long userId);

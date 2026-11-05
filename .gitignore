@@ -36,3 +36,17 @@ build/
 
 ### Mac OS ###
 .DS_Store
+.env
+.env.*
+!.env.example
+node_modules/
+web/dist/
+*.tsbuildinfo
+
+web/test-results/
+web/playwright-report/
+web/e2e/.state.json
+backups/
+
+__pycache__/
+*.pyc

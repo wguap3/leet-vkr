@@ -1,3 +1,4 @@
+import { notify } from '../components/Toast'
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import * as problemsApi from '../api/problems'
@@ -66,7 +67,7 @@ export default function TestCasesPage() {
       setTestCases(prev => prev.map(t => t.id === tc.id ? data : t))
       cancelEdit(tc.id)
     } catch {
-      alert('Ошибка при сохранении')
+      notify('Ошибка при сохранении')
     } finally {
       setSaving(prev => ({ ...prev, [tc.id]: false }))
     }
@@ -78,17 +79,13 @@ export default function TestCasesPage() {
       await problemsApi.deleteTestCase(problemId, tc.id)
       setTestCases(prev => prev.filter(t => t.id !== tc.id))
     } catch {
-      alert('Ошибка при удалении')
+      notify('Ошибка при удалении')
     }
   }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
     setAddError('')
-    if (!newInput.trim() || !newOutput.trim()) {
-      setAddError('Заполните входные данные и ожидаемый результат')
-      return
-    }
     setAdding(true)
     try {
       const orderIndex = testCases.length > 0 ? Math.max(...testCases.map(t => t.orderIndex)) + 1 : 1
@@ -162,14 +159,14 @@ export default function TestCasesPage() {
             {e ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <label style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Входные данные</label>
-                <textarea
+                <textarea aria-label="Входные данные"
                   rows={4}
                   value={e.inputData}
                   onChange={ev => setEditing(prev => ({ ...prev, [tc.id]: { ...prev[tc.id], inputData: ev.target.value } }))}
                   style={{ fontFamily: 'monospace', fontSize: '0.85rem', padding: '0.5rem', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 4, color: 'inherit', resize: 'vertical' }}
                 />
                 <label style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Ожидаемый вывод</label>
-                <textarea
+                <textarea aria-label="Ожидаемый вывод"
                   rows={4}
                   value={e.expectedOutput}
                   onChange={ev => setEditing(prev => ({ ...prev, [tc.id]: { ...prev[tc.id], expectedOutput: ev.target.value } }))}
@@ -222,7 +219,7 @@ export default function TestCasesPage() {
           {addError && <div style={{ color: 'var(--red)', marginBottom: '0.75rem', fontSize: '0.9rem' }}>{addError}</div>}
 
           <label style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Входные данные</label>
-          <textarea
+          <textarea aria-label="Входные данные"
             rows={4}
             value={newInput}
             onChange={e => setNewInput(e.target.value)}
@@ -231,7 +228,7 @@ export default function TestCasesPage() {
           />
 
           <label style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Ожидаемый вывод</label>
-          <textarea
+          <textarea aria-label="Ожидаемый вывод"
             rows={4}
             value={newOutput}
             onChange={e => setNewOutput(e.target.value)}

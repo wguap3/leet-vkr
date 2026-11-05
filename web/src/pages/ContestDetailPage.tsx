@@ -1,3 +1,4 @@
+import { notify } from '../components/Toast'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import * as contestsApi from '../api/contests'
@@ -47,6 +48,9 @@ export default function ContestDetailPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'problems' | 'leaderboard'>('problems')
   const [registering, setRegistering] = useState(false)
+  const [error, setError] = useState('')
+  const [rotating, setRotating] = useState(false)
+  const [confirmRotate, setConfirmRotate] = useState(false)
   const [copySuccess, setCopySuccess] = useState(false)
   const isOwnContest = contest?.organizerId != null && user?.id != null && contest.organizerId === user.id
 
@@ -60,6 +64,7 @@ export default function ContestDetailPage() {
   const load = () => {
     contestsApi.getContest(Number(id))
       .then(({ data }) => setContest(data))
+      .catch(() => setError('Контест недоступен или не найден'))
       .finally(() => setLoading(false))
   }
 
@@ -77,17 +82,18 @@ export default function ContestDetailPage() {
       await contestsApi.registerForContest(Number(id))
       load()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Ошибка регистрации')
+      notify(err.response?.data?.message || 'Ошибка регистрации')
     } finally {
       setRegistering(false)
     }
   }
 
   if (loading) return <div className="empty-state" style={{ marginTop: 80 }}><span className="spinner" /></div>
-  if (!contest) return <div className="empty-state">Контест не найден</div>
+  if (!contest) return <div className="empty-state" role="alert">{error || 'Контест не найден'}<Link to="/contests" className="btn btn-outline">К контестам</Link></div>
 
   return (
     <div className="page-container">
+      {error && <div className="alert alert-error" role="alert">{error}</div>}
       <div className={styles.header}>
         <div>
           <h1>{contest.title}</h1>
@@ -129,10 +135,10 @@ export default function ContestDetailPage() {
             </span>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <Link to={`/contests/${id}/standings`} className="btn btn-outline btn-sm" style={{display:'inline-flex',alignItems:'center',gap:5}}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 21H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-3"/><path d="M12 21V9"/><path d="M9 9h6"/><path d="M7 3a1 1 0 0 0-1 1v1a5 5 0 0 0 6 4.9A5 5 0 0 0 18 5V4a1 1 0 0 0-1-1H7z"/></svg>
-          Standings
+          Таблица результатов
         </Link>
         {(isOwnContest || isAdmin) && (
           <>
@@ -146,7 +152,7 @@ export default function ContestDetailPage() {
           </Link>
           </>
         )}
-        {!contest.isRegistered && contest.status !== 'FINISHED' && (
+        {user?.role === 'CONTESTANT' && !contest.isRegistered && contest.status !== 'FINISHED' && (
           <button className="btn btn-primary" onClick={handleRegister} disabled={registering}>
             {registering ? <span className="spinner" /> : 'Зарегистрироваться'}
           </button>
@@ -176,15 +182,31 @@ export default function ContestDetailPage() {
             </code>
             <button
               className={styles.copyBtn + (copySuccess ? ' ' + styles.copySuccess : '')}
-              onClick={() => {
-                navigator.clipboard.writeText(window.location.origin + '/contests/invite/' + contest.inviteToken)
+              onClick={async () => {
+                try {
+                await navigator.clipboard.writeText(window.location.origin + '/contests/invite/' + contest.inviteToken)
                 setCopySuccess(true)
                 setTimeout(() => setCopySuccess(false), 2000)
+                } catch { notify('Не удалось скопировать. Выделите и скопируйте ссылку вручную.') }
               }}
             >
               {copySuccess ? '✓ Скопировано' : 'Копировать'}
             </button>
           </div>
+          <p style={{ color: 'var(--text-2)', marginTop: 12, fontSize: 13 }}>
+            Отправьте ссылку участникам. После входа или регистрации они смогут присоединиться.
+            Ссылку может использовать любой, кому её передали.
+          </p>
+          {confirmRotate ? <div style={{ marginTop: 12 }}>
+            <p>Старая ссылка перестанет работать. Уже вступившие участники сохранят доступ.</p>
+            <button className="btn btn-outline" disabled={rotating} onClick={async () => {
+              setRotating(true)
+              try { const { data } = await contestsApi.rotateInvite(contest.id); setContest(data); setCopySuccess(false); setConfirmRotate(false); notify('Новая ссылка готова') }
+              catch { notify('Не удалось заменить ссылку. Попробуйте снова.') }
+              finally { setRotating(false) }
+            }}>{rotating ? 'Заменяем…' : 'Подтвердить замену'}</button>
+            <button className="btn btn-ghost" disabled={rotating} onClick={() => setConfirmRotate(false)}>Отмена</button>
+          </div> : <button className="btn btn-ghost" onClick={() => setConfirmRotate(true)}>Заменить ссылку</button>}
         </div>
       )}
 
@@ -207,7 +229,7 @@ export default function ContestDetailPage() {
               {contest.problems.map((p, i) => (
                 <tr key={p.id}>
                   <td style={{ color: 'var(--text-2)', width: 40 }}>{String.fromCharCode(65 + i)}</td>
-                  <td><Link to={`/problems/${p.id}`}>{p.title}</Link></td>
+                  <td><Link to={`/problems/${p.id}?contestId=${id}`}>{p.title}</Link></td>
                   <td><span className={`badge badge-${p.difficulty.toLowerCase()}`}>{DIFF_LABELS[p.difficulty]}</span></td>
                 </tr>
               ))}
@@ -219,7 +241,7 @@ export default function ContestDetailPage() {
         <div className="card">
           <table className="table">
             <thead>
-              <tr><th>Место</th><th>Участник</th><th>Баллы</th><th>Штраф</th><th>Посылок</th></tr>
+              <tr><th>Место</th><th>Участник</th><th>Баллы</th><th>Штраф</th><th>Посылок</th>{(isOwnContest || isAdmin) && <th>Участие</th>}</tr>
             </thead>
             <tbody>
               {leaderboard.map(e => (
@@ -229,6 +251,10 @@ export default function ContestDetailPage() {
                   <td style={{ fontWeight: 600 }}>{e.score}</td>
                   <td style={{ color: 'var(--text-2)' }}>{e.penalty}</td>
                   <td style={{ color: 'var(--text-2)' }}>{e.submissionCount}</td>
+                  {(isOwnContest || isAdmin) && <td><button className="btn btn-danger btn-sm" disabled={e.submissionCount > 0} onClick={async () => {
+                    try { await contestsApi.removeParticipant(Number(id), e.userId); setLeaderboard(xs => xs.filter(x => x.userId !== e.userId)) }
+                    catch (err: any) { setError(err.response?.data?.message || 'Не удалось удалить участника') }
+                  }}>Исключить</button></td>}
                 </tr>
               ))}
             </tbody>

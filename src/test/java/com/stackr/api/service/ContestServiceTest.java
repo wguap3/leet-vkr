@@ -159,6 +159,15 @@ class ContestServiceTest {
                 .score(100).penalty(10).submissionCount(1).build();
         cp2.setRegisteredAt(LocalDateTime.now());
 
+        var p1 = com.stackr.api.entity.Problem.builder().id(10L).title("A").build();
+        var p2 = com.stackr.api.entity.Problem.builder().id(11L).title("B").build();
+        runningContest.setProblems(List.of(p1, p2));
+        given(contestRepository.findById(5L)).willReturn(Optional.of(runningContest));
+        given(submissionRepository.findAllByContestId(5L)).willReturn(List.of(
+            com.stackr.api.entity.Submission.builder().user(contestant).problem(p1).verdict(com.stackr.api.entity.enums.Verdict.AC).submittedAt(runningContest.getStartTime().plusMinutes(5)).build(),
+            com.stackr.api.entity.Submission.builder().user(contestant).problem(p2).verdict(com.stackr.api.entity.enums.Verdict.AC).submittedAt(runningContest.getStartTime().plusMinutes(8)).build(),
+            com.stackr.api.entity.Submission.builder().user(organizer).problem(p1).verdict(com.stackr.api.entity.enums.Verdict.AC).submittedAt(runningContest.getStartTime().plusMinutes(10)).build()
+        ));
         given(participationRepository.findLeaderboard(5L)).willReturn(List.of(cp1, cp2));
 
         List<LeaderboardEntryDto> board = contestService.getLeaderboard(5L);
@@ -174,6 +183,7 @@ class ContestServiceTest {
     @Test
     @DisplayName("getLeaderboard: пустой контест → пустой список")
     void getLeaderboard_emptyContest_returnsEmptyList() {
+        given(contestRepository.findById(5L)).willReturn(Optional.of(runningContest));
         given(participationRepository.findLeaderboard(5L)).willReturn(List.of());
 
         assertThat(contestService.getLeaderboard(5L)).isEmpty();
@@ -184,9 +194,9 @@ class ContestServiceTest {
     @Test
     @DisplayName("deleteContest: не найден → EntityNotFoundException")
     void deleteContest_notFound_throws() {
-        given(contestRepository.existsById(99L)).willReturn(false);
+        given(contestRepository.findById(99L)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> contestService.deleteContest(99L))
+        assertThatThrownBy(() -> contestService.deleteContest(99L, 1L, false))
                 .isInstanceOf(EntityNotFoundException.class);
     }
 

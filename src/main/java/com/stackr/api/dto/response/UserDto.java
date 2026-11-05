@@ -10,5 +10,6 @@ public record UserDto(
         String email,
         Role role,
         Integer rating,
-        LocalDateTime registeredAt
+        LocalDateTime registeredAt,
+        boolean active
 ) {}

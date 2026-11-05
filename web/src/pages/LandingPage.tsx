@@ -1,3 +1,4 @@
+import { BrandMark } from '../components/Brand'
 import { Link } from 'react-router-dom'
 import styles from './LandingPage.module.css'
 
@@ -118,7 +119,7 @@ export default function LandingPage() {
             <div className={styles.statDiv} />
             <div className={styles.stat}><strong>3</strong><span>уровня сложности</span></div>
             <div className={styles.statDiv} />
-            <div className={styles.stat}><strong>∞</strong><span>задач</span></div>
+            <div className={styles.stat}><strong>24/7</strong><span>практика</span></div>
           </div>
         </div>
 
@@ -126,7 +127,7 @@ export default function LandingPage() {
         <div className={styles.codeCard}>
           <div className={styles.codeHeader}>
             <div className={styles.codeTitle}>Solution.java</div>
-            <span className={`badge badge-ac`} style={{ fontSize: 12 }}>AC — 28ms</span>
+            <span className={`badge badge-ac`} style={{ fontSize: 12 }}>Пример решения</span>
           </div>
           <pre className={styles.codeBody}><code>{CODE_EXAMPLE}</code></pre>
         </div>
@@ -161,16 +162,8 @@ export default function LandingPage() {
       {/* ── Footer ── */}
       <footer className={styles.footer}>
         <span style={{display:'flex',alignItems:'center',gap:8,justifyContent:'center'}}>
-          <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
-            <rect x="1" y="1" width="20" height="20" rx="5" fill="url(#footer-logo-grad)" />
-            <path d="M14.5 4.5L8 11H13L7.5 17.5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-            <defs>
-              <linearGradient id="footer-logo-grad" x1="1" y1="1" x2="21" y2="21" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#8b5cf6"/><stop offset="1" stopColor="#6d28d9"/>
-              </linearGradient>
-            </defs>
-          </svg>
-          Stackr — дипломный проект
+          <BrandMark size={20} />
+          Stackr · Практика. Прогресс. Соревнования.
         </span>
       </footer>
     </div>

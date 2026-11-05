@@ -35,6 +35,7 @@ public class RunnerClient {
         );
 
         try {
+            validateComposeDestination();
             ResponseEntity<RunnerResponse> response = restTemplate.postForEntity(
                     runnerUrl + "/api/run", request, RunnerResponse.class);
             return response.getBody();
@@ -42,8 +43,8 @@ public class RunnerClient {
             log.error("Runner call failed for submission {}: {}", submissionId, e.getMessage());
             RunnerResponse error = new RunnerResponse();
             error.setSubmissionId(submissionId);
-            error.setVerdict("RE");
-            error.setErrorMessage("Runner unavailable: " + e.getMessage());
+            error.setVerdict("ERROR");
+            error.setErrorMessage("Judge is temporarily unavailable; please try again later");
             return error;
         }
     }
@@ -56,15 +57,29 @@ public class RunnerClient {
                 "memoryLimitMb", memoryLimitMb
         );
         try {
+            validateComposeDestination();
             ResponseEntity<CustomRunResult> resp = restTemplate.postForEntity(
                     runnerUrl + "/api/run-custom", request, CustomRunResult.class);
             return resp.getBody();
         } catch (Exception e) {
             log.error("Custom runner call failed: {}", e.getMessage());
             CustomRunResult err = new CustomRunResult();
-            err.setStatus("RE");
-            err.setStderr("Runner unavailable: " + e.getMessage());
+            err.setStatus("ERROR");
+            err.setStderr("Judge is temporarily unavailable; please try again later");
             return err;
+        }
+    }
+
+    private void validateComposeDestination() throws java.net.UnknownHostException {
+        // "runner" is our Compose service, never an external host. Some host DNS/VPN
+        // resolvers synthesize a public/reserved address when that service is down.
+        var uri = java.net.URI.create(runnerUrl);
+        if ("runner".equalsIgnoreCase(uri.getHost())) {
+            for (var address : java.net.InetAddress.getAllByName(uri.getHost())) {
+                if (!address.isSiteLocalAddress()) {
+                    throw new java.net.UnknownHostException("Internal runner DNS is unavailable");
+                }
+            }
         }
     }
 

@@ -36,6 +36,7 @@ import static org.mockito.BDDMockito.*;
 @DisplayName("ProblemService — unit tests")
 class ProblemServiceTest {
 
+    @Mock com.stackr.api.repository.ContestRepository contestRepository;
     @Mock ProblemRepository problemRepository;
     @Mock UserRepository userRepository;
     @Mock TagRepository tagRepository;
@@ -64,7 +65,7 @@ class ProblemServiceTest {
         var page = new PageImpl<>(List.of(problem));
         given(problemRepository.findByFilters(null, null, null, PageRequest.of(0, 10))).willReturn(page);
         given(submissionRepository.countDistinctUsersByProblemIdsAndVerdict(anyList(), eq(Verdict.AC)))
-                .willReturn(List.of(new Object[]{10L, 5L}));
+                .willReturn(List.<Object[]>of(new Object[]{10L, 5L}));
         given(submissionRepository.findSolvedProblemIdsByUserIdAndProblemIds(eq(1L), anyList()))
                 .willReturn(List.of(10L));
 
@@ -179,6 +180,8 @@ class ProblemServiceTest {
         given(problemRepository.findById(10L)).willReturn(Optional.of(problem));
         given(problemRepository.save(any())).willReturn(problem);
 
+        given(testCaseRepository.findByProblemIdOrderByOrderIndexAsc(10L))
+                .willReturn(List.of(com.stackr.api.entity.TestCase.builder().id(1L).build()));
         problemService.setVisibility(10L, true, 1L);
 
         assertThat(problem.isVisible()).isTrue();

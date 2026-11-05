@@ -51,8 +51,8 @@ public class HintService {
     }
 
     @Transactional
-    public void deleteHint(Long hintId) {
-        if (!hintRepository.existsById(hintId)) {
+    public void deleteHint(Long problemId, Long hintId) {
+        if (hintRepository.findById(hintId).filter(h -> h.getProblem().getId().equals(problemId)).isEmpty()) {
             throw new EntityNotFoundException("Hint not found: " + hintId);
         }
         hintRepository.deleteById(hintId);

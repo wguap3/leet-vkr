@@ -33,6 +33,32 @@ class ContestControllerIntegrationTest extends BaseIntegrationTest {
         organizerToken = loginOnly("org", "password123");
     }
 
+    @Test
+    void invitePreviewJoinAndRotationPreservePrivacy() throws Exception {
+        var contest = contestRepository.save(Contest.builder().title("Private invitation")
+                .organizer(organizer).isPublic(false).inviteToken("old-invite")
+                .startTime(LocalDateTime.now().minusHours(1)).endTime(LocalDateTime.now().plusHours(1)).build());
+        mockMvc.perform(get("/api/contests/invite/old-invite"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.problems").isEmpty())
+                .andExpect(jsonPath("$.inviteToken").isEmpty());
+        mockMvc.perform(get("/api/contests/"+contest.getId()).header("Authorization", bearer(contestantToken)))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/contests/"+contest.getId()+"/invite/rotate").header("Authorization", bearer(contestantToken)))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/contests/invite/old-invite/join").header("Authorization", bearer(contestantToken)))
+                .andExpect(status().isOk());
+        var response = mockMvc.perform(post("/api/contests/"+contest.getId()+"/invite/rotate").header("Authorization", bearer(organizerToken)))
+                .andExpect(status().isOk()).andReturn();
+        String token = objectMapper.readTree(response.getResponse().getContentAsString()).get("inviteToken").asText();
+        org.junit.jupiter.api.Assertions.assertNotEquals("old-invite", token);
+        mockMvc.perform(get("/api/contests/invite/old-invite")).andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/contests/invite/old-invite/join").header("Authorization", bearer(contestantToken)))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/contests/"+contest.getId()).header("Authorization", bearer(contestantToken)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.isRegistered").value(true));
+        mockMvc.perform(get("/api/contests/invite/"+token)).andExpect(status().isOk());
+    }
+
     // ── GET /api/contests ─────────────────────────────────────────────────────
 
     @Test

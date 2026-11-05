@@ -45,3 +45,10 @@
 }
 .copyBtn:hover { background: rgba(139,92,246,.2); border-color: var(--violet); }
 .copySuccess { background: var(--green-dim) !important; color: var(--green) !important; border-color: rgba(34,197,94,.3) !important; }
+
+@media (max-width: 720px) {
+  .header { flex-direction: column; }
+  .header h1 { overflow-wrap: anywhere; }
+  .inviteLinkRow { flex-direction: column; align-items: stretch; }
+  .inviteLink { flex: auto; white-space: normal; overflow-wrap: anywhere; }
+}

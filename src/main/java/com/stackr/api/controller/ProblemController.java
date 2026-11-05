@@ -26,16 +26,21 @@ public class ProblemController {
     private final ProblemService problemService;
 
     @GetMapping
+    @PreAuthorize("!#mine or hasAnyRole('ORGANIZER', 'ADMIN')")
     public ResponseEntity<Page<ProblemShortDto>> getAll(
             @RequestParam(required = false) Difficulty difficulty,
             @RequestParam(required = false) Long tagId,
             @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "false") boolean mine,
+            @RequestParam(required = false) Boolean solved,
             @AuthenticationPrincipal UserPrincipal principal,
             Pageable pageable) {
-        return ResponseEntity.ok(problemService.getProblems(difficulty, tagId, search, principal.getId(), pageable));
+        Long userId = principal != null ? principal.getId() : null;
+        return ResponseEntity.ok(problemService.getCatalog(difficulty, tagId, search, userId, mine, solved, pageable));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@problemAccess.canRead(#id, authentication)")
     public ResponseEntity<ProblemDetailDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(problemService.getProblemById(id));
     }
@@ -53,7 +58,7 @@ public class ProblemController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
     public ResponseEntity<ProblemDetailDto> update(
             @PathVariable Long id,
-            @RequestBody UpdateProblemRequest req,
+            @Valid @RequestBody UpdateProblemRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(problemService.updateProblem(id, req, principal.getId()));
     }
@@ -68,6 +73,7 @@ public class ProblemController {
     }
 
     @GetMapping("/{id}/stats")
+    @PreAuthorize("@problemAccess.canRead(#id, authentication)")
     public ResponseEntity<ProblemStatsDto> getStats(@PathVariable Long id) {
         return ResponseEntity.ok(problemService.getProblemStats(id));
     }

@@ -1,3 +1,4 @@
+import RequestError from '../components/RequestError'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import * as contestsApi from '../api/contests'
@@ -29,13 +30,17 @@ export default function ContestsPage() {
   const [contests, setContests] = useState<ContestShort[]>([])
   const [status, setStatus] = useState<ContestStatus | ''>('')
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     setLoading(true)
     contestsApi.getContests(status || undefined)
       .then(({ data }) => setContests(data))
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false))
   }, [status])
+
+  if (loadError) return <RequestError />
 
   return (
     <div className="page-container">

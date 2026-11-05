@@ -32,6 +32,7 @@ class SubmissionProcessorTest {
     @Mock UserRepository userRepository;
     @Mock ContestParticipationRepository participationRepository;
     @Mock RunnerClient runnerClient;
+    @Mock NotificationService notificationService;
 
     @InjectMocks SubmissionProcessor processor;
 
@@ -69,8 +70,8 @@ class SubmissionProcessorTest {
     // ── AC, первая решённая → рейтинг начисляется ─────────────────────────────
 
     @Test
-    @DisplayName("processAsync: AC, первый AC для юзера на задаче → рейтинг +10")
-    void processAsync_firstAc_updatesRating() {
+    @DisplayName("processSubmission: AC, первый AC для юзера на задаче → рейтинг +10")
+    void processSubmission_firstAc_updatesRating() {
         given(submissionRepository.findById(42L)).willReturn(Optional.of(submission));
         given(testCaseRepository.findByProblemIdOrderByOrderIndexAsc(10L)).willReturn(List.of());
         given(runnerClient.run(eq(42L), any(), any(), anyInt(), anyInt())).willReturn(acResponse());
@@ -79,7 +80,7 @@ class SubmissionProcessorTest {
         given(userRepository.findById(1L)).willReturn(Optional.of(user));
         given(userRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        processor.processAsync(42L, 10L, 2000, 256);
+        processor.processSubmission(42L, 10L, 2000, 256);
 
         assertThat(submission.getVerdict()).isEqualTo(Verdict.AC);
         then(userRepository).should().save(argThat(u -> u.getRating() == 110));
@@ -88,15 +89,15 @@ class SubmissionProcessorTest {
     // ── AC, уже решал раньше → двойного начисления нет ───────────────────────
 
     @Test
-    @DisplayName("processAsync: AC, но не первый AC (count=2) → рейтинг НЕ начисляется")
-    void processAsync_secondAc_doesNotUpdateRating() {
+    @DisplayName("processSubmission: AC, но не первый AC (count=2) → рейтинг НЕ начисляется")
+    void processSubmission_secondAc_doesNotUpdateRating() {
         given(submissionRepository.findById(42L)).willReturn(Optional.of(submission));
         given(testCaseRepository.findByProblemIdOrderByOrderIndexAsc(10L)).willReturn(List.of());
         given(runnerClient.run(eq(42L), any(), any(), anyInt(), anyInt())).willReturn(acResponse());
         given(submissionRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
         given(submissionRepository.countByUserIdAndProblemIdAndVerdict(1L, 10L, Verdict.AC)).willReturn(2L);
 
-        processor.processAsync(42L, 10L, 2000, 256);
+        processor.processSubmission(42L, 10L, 2000, 256);
 
         assertThat(submission.getVerdict()).isEqualTo(Verdict.AC);
         // updateRating never called — userRepository.findById should not be touched
@@ -107,14 +108,14 @@ class SubmissionProcessorTest {
     // ── WA → рейтинг не трогается ─────────────────────────────────────────────
 
     @Test
-    @DisplayName("processAsync: WA вердикт → рейтинг и score не меняются")
-    void processAsync_wrongAnswer_noRatingChange() {
+    @DisplayName("processSubmission: WA вердикт → рейтинг и score не меняются")
+    void processSubmission_wrongAnswer_noRatingChange() {
         given(submissionRepository.findById(42L)).willReturn(Optional.of(submission));
         given(testCaseRepository.findByProblemIdOrderByOrderIndexAsc(10L)).willReturn(List.of());
         given(runnerClient.run(eq(42L), any(), any(), anyInt(), anyInt())).willReturn(waResponse());
         given(submissionRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        processor.processAsync(42L, 10L, 2000, 256);
+        processor.processSubmission(42L, 10L, 2000, 256);
 
         assertThat(submission.getVerdict()).isEqualTo(Verdict.WA);
         then(userRepository).should(never()).save(any());
@@ -125,17 +126,17 @@ class SubmissionProcessorTest {
     // ── Runner упал → RE вердикт ───────────────────────────────────────────────
 
     @Test
-    @DisplayName("processAsync: runner выбросил исключение → вердикт RE, сохраняется")
-    void processAsync_runnerThrows_setsReVerdict() {
+    @DisplayName("processSubmission: runner выбросил исключение → вердикт RE, сохраняется")
+    void processSubmission_runnerThrows_setsInfrastructureError() {
         given(submissionRepository.findById(42L)).willReturn(Optional.of(submission));
         given(testCaseRepository.findByProblemIdOrderByOrderIndexAsc(10L)).willReturn(List.of());
         given(runnerClient.run(eq(42L), any(), any(), anyInt(), anyInt()))
                 .willThrow(new RuntimeException("Connection refused"));
         given(submissionRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
-        processor.processAsync(42L, 10L, 2000, 256);
+        processor.processSubmission(42L, 10L, 2000, 256);
 
-        assertThat(submission.getVerdict()).isEqualTo(Verdict.RE);
+        assertThat(submission.getVerdict()).isEqualTo(Verdict.ERROR);
         assertThat(submission.getErrorMessage()).contains("Runner unavailable");
         then(submissionRepository).should().save(submission);
     }
@@ -143,13 +144,33 @@ class SubmissionProcessorTest {
     // ── Submission не найдена → ранний выход ──────────────────────────────────
 
     @Test
-    @DisplayName("processAsync: submission не найдена → ничего не вызывается")
-    void processAsync_submissionNotFound_returnsEarly() {
+    @DisplayName("processSubmission: submission не найдена → ничего не вызывается")
+    void processSubmission_submissionNotFound_returnsEarly() {
         given(submissionRepository.findById(99L)).willReturn(Optional.empty());
 
-        processor.processAsync(99L, 10L, 2000, 256);
+        processor.processSubmission(99L, 10L, 2000, 256);
 
         then(runnerClient).should(never()).run(any(), any(), any(), anyInt(), anyInt());
         then(submissionRepository).should(never()).save(any());
     }
+    @Test
+    void repeatedAcceptedSolutionsDoNotInflateContestScore() {
+        var contest = com.stackr.api.entity.Contest.builder().id(5L).build();
+        submission.setContest(contest);
+        var previousAc = com.stackr.api.entity.Submission.builder().user(user).problem(problem)
+                .contest(contest).verdict(Verdict.AC).build();
+        var wrong = com.stackr.api.entity.Submission.builder().user(user).problem(problem)
+                .contest(contest).verdict(Verdict.WA).build();
+        var participation = com.stackr.api.entity.ContestParticipation.builder().user(user).contest(contest).score(100).build();
+        given(submissionRepository.findById(42L)).willReturn(Optional.of(submission));
+        given(testCaseRepository.findByProblemIdOrderByOrderIndexAsc(10L)).willReturn(List.of());
+        given(runnerClient.run(eq(42L), any(), any(), anyInt(), anyInt())).willReturn(acResponse());
+        given(submissionRepository.countByUserIdAndProblemIdAndVerdict(1L, 10L, Verdict.AC)).willReturn(2L);
+        given(participationRepository.findByUserIdAndContestId(1L, 5L)).willReturn(Optional.of(participation));
+        given(submissionRepository.findAllByContestId(5L)).willReturn(List.of(previousAc, wrong, submission));
+        processor.processSubmission(42L, 10L, 2000, 256);
+        assertThat(participation.getScore()).isEqualTo(100);
+        assertThat(participation.getSubmissionCount()).isEqualTo(3);
+    }
+
 }

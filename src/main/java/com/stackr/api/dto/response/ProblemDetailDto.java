@@ -15,5 +15,6 @@ public record ProblemDetailDto(
         Set<TagDto> tags,
         String codeTemplate,
         List<TestCaseDto> publicTestCases,
-        boolean visible
+        boolean visible,
+        Long authorId
 ) {}

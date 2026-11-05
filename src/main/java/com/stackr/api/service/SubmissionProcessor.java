@@ -5,14 +5,13 @@ import com.stackr.api.entity.enums.Verdict;
 import com.stackr.api.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Отдельный компонент для асинхронной обработки посылок.
- * Вынесен из SubmissionService, чтобы @Async работал через Spring-прокси
- * (самовызов внутри одного бина обходит AOP-перехват).
+ * Database-backed queue processor. One scheduled worker processes committed PENDING rows.
+ * A row lock prevents the same submission from being processed twice.
  */
 @Slf4j
 @Service
@@ -28,14 +27,23 @@ public class SubmissionProcessor {
 
     public RunnerClient getRunnerClient() { return runnerClient; }
 
-    @Async
     @Transactional
-    public void processAsync(Long submissionId, Long problemId, int timeLimitMs, int memoryLimitMb) {
+    public void processNext() {
+        var pending = submissionRepository.findPendingForProcessing(Verdict.PENDING, PageRequest.of(0, 1));
+        if (pending.isEmpty()) return;
+        var s = pending.get(0);
+        processSubmission(s.getId(), s.getProblem().getId(), s.getProblem().getTimeLimitMs(), s.getProblem().getMemoryLimitMb());
+    }
+
+    @Transactional
+    public void processSubmission(Long submissionId, Long problemId, int timeLimitMs, int memoryLimitMb) {
         var submission = submissionRepository.findById(submissionId).orElse(null);
         if (submission == null) {
             log.warn("Submission {} not found for async processing", submissionId);
             return;
         }
+
+        if (submission.getVerdict() != Verdict.PENDING) return;
 
         var testCases = testCaseRepository.findByProblemIdOrderByOrderIndexAsc(problemId);
 
@@ -49,8 +57,8 @@ public class SubmissionProcessor {
             submission.setErrorMessage(result.getErrorMessage());
         } catch (Exception e) {
             log.error("Runner error for submission {}: {}", submissionId, e.getMessage());
-            submission.setVerdict(Verdict.RE);
-            submission.setErrorMessage("Runner unavailable: " + e.getMessage());
+            submission.setVerdict(Verdict.ERROR);
+            submission.setErrorMessage("Runner unavailable");
         }
 
         submissionRepository.save(submission);
@@ -67,10 +75,8 @@ public class SubmissionProcessor {
             if (acCount == 1L) {
                 updateRating(submission.getUser().getId());
             }
-            if (submission.getContest() != null) {
-                updateContestScore(submission);
-            }
         }
+        if (submission.getContest() != null) updateContestScore(submission);
     }
 
     private void sendVerdictNotification(Submission submission, Long problemId) {
@@ -85,6 +91,7 @@ public class SubmissionProcessor {
             case WA  -> "✗ Неверный ответ: «" + problemTitle + "»";
             case TLE -> "⏱ Превышен лимит времени: «" + problemTitle + "»";
             case CE  -> "⚙ Ошибка компиляции: «" + problemTitle + "»";
+            case ERROR -> "Проверка временно недоступна: «" + problemTitle + "»";
             case RE  -> "💥 Ошибка выполнения: «" + problemTitle + "»";
             default  -> "Посылка проверена: «" + problemTitle + "»";
         };
@@ -104,8 +111,13 @@ public class SubmissionProcessor {
         participationRepository
                 .findByUserIdAndContestId(submission.getUser().getId(), submission.getContest().getId())
                 .ifPresent(cp -> {
-                    cp.setScore(cp.getScore() + 100);
-                    cp.setSubmissionCount(cp.getSubmissionCount() + 1);
+                    var submissions = submissionRepository.findAllByContestId(submission.getContest().getId()).stream()
+                            .filter(s -> s.getUser().getId().equals(submission.getUser().getId()))
+                            .filter(s -> s.getVerdict() != Verdict.PENDING && s.getVerdict() != Verdict.ERROR).toList();
+                    long solved = submissions.stream().filter(s -> s.getVerdict() == Verdict.AC)
+                            .map(s -> s.getProblem().getId()).distinct().count();
+                    cp.setScore(Math.toIntExact(solved * 100));
+                    cp.setSubmissionCount(submissions.size());
                     participationRepository.save(cp);
                 });
     }

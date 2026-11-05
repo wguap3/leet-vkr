@@ -1,0 +1,13 @@
+.git
+.idea
+**/target
+**/node_modules
+**/dist
+.env
+.env.*
+__MACOSX
+.DS_Store
+
+**/test-results
+**/playwright-report
+**/.state.json

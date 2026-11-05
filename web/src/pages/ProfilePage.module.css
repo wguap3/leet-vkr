@@ -24,3 +24,5 @@
 .progressLabel { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; }
 .progressTrack { height: 6px; background: var(--bg-4); border-radius: 99px; overflow: hidden; }
 .progressFill { height: 100%; border-radius: 99px; transition: width .5s ease; }
+
+@media(max-width:600px) { .stats { grid-template-columns:1fr; } .profileHeader { flex-wrap:wrap; } .progressGrid { grid-template-columns:1fr; } }

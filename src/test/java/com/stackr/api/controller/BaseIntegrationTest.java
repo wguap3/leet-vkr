@@ -60,6 +60,9 @@ public abstract class BaseIntegrationTest {
      */
     @AfterEach
     void cleanDatabase() {
+        jdbcTemplate.execute("DELETE FROM notifications");
+        jdbcTemplate.execute("DELETE FROM hints");
+        jdbcTemplate.execute("DELETE FROM test_cases");
         submissionRepository.deleteAllInBatch();
         participationRepository.deleteAllInBatch();
         jdbcTemplate.execute("DELETE FROM contest_problems");

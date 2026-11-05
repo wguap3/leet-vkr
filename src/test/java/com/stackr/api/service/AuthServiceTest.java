@@ -137,6 +137,7 @@ class AuthServiceTest {
     @DisplayName("refresh: валидный токен → новый TokenResponse")
     void refresh_validToken_returnsNewTokenResponse() {
         given(jwtUtil.validateToken("valid-refresh")).willReturn(true);
+        given(jwtUtil.getTokenType("valid-refresh")).willReturn(JwtUtil.TYPE_REFRESH);
         given(jwtUtil.getUserIdFromToken("valid-refresh")).willReturn(1L);
         given(userRepository.findById(1L)).willReturn(Optional.of(alice));
         given(jwtUtil.generateAccessToken(1L, "alice")).willReturn("new-access");
@@ -161,6 +162,7 @@ class AuthServiceTest {
     @DisplayName("refresh: токен валиден, но пользователь удалён → EntityNotFoundException")
     void refresh_userNotFound_throwsEntityNotFoundException() {
         given(jwtUtil.validateToken("orphan-token")).willReturn(true);
+        given(jwtUtil.getTokenType("orphan-token")).willReturn(JwtUtil.TYPE_REFRESH);
         given(jwtUtil.getUserIdFromToken("orphan-token")).willReturn(99L);
         given(userRepository.findById(99L)).willReturn(Optional.empty());
 

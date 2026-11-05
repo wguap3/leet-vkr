@@ -15,17 +15,21 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RunnerController {
 
+    private final java.util.concurrent.Semaphore jobs = new java.util.concurrent.Semaphore(2);
     private final RunnerService runnerService;
     private final DockerService dockerService;
 
     @PostMapping("/run")
-    public ResponseEntity<RunResponse> run(@RequestBody RunRequest req) {
-        return ResponseEntity.ok(runnerService.run(req));
+    public ResponseEntity<RunResponse> run(@jakarta.validation.Valid @RequestBody RunRequest req) {
+        if (!jobs.tryAcquire()) return ResponseEntity.status(429).build();
+        try { return ResponseEntity.ok(runnerService.run(req)); }
+        finally { jobs.release(); }
     }
 
     /** Custom run: compile + execute with arbitrary input, return raw stdout/stderr. */
     @PostMapping("/run-custom")
-    public ResponseEntity<CustomRunResponse> runCustom(@RequestBody CustomRunRequest req) {
+    public ResponseEntity<CustomRunResponse> runCustom(@jakarta.validation.Valid @RequestBody CustomRunRequest req) {
+        if (!jobs.tryAcquire()) return ResponseEntity.status(429).build();
         try {
             int timeLimit = req.timeLimitMs() > 0 ? req.timeLimitMs() : 5000;
             int memLimit  = req.memoryLimitMb() > 0 ? req.memoryLimitMb() : 256;
@@ -40,12 +44,12 @@ public class RunnerController {
             return ResponseEntity.ok(new CustomRunResponse(
                     result.stdout(), result.stderr(), result.exitCode(), result.elapsedMs(), status));
         } catch (Exception e) {
-            return ResponseEntity.ok(new CustomRunResponse("", e.getMessage(), -1, 0, "RE"));
-        }
+            return ResponseEntity.ok(new CustomRunResponse("", "Execution service unavailable", -1, 0, "ERROR"));
+        } finally { jobs.release(); }
     }
 
     @GetMapping("/health")
     public ResponseEntity<String> health() {
-        return ResponseEntity.ok("OK");
+        return dockerService.isReady() ? ResponseEntity.ok("OK") : ResponseEntity.status(503).body("Sandbox unavailable");
     }
 }

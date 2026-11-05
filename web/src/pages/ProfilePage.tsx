@@ -1,3 +1,4 @@
+import RequestError from '../components/RequestError'
 import { useEffect, useState } from 'react'
 import api from '../api/client'
 import { changePassword } from '../api/users'
@@ -7,7 +8,7 @@ import styles from './ProfilePage.module.css'
 
 const VERDICT_LABELS: Record<string, string> = {
   AC: 'Принято', WA: 'Неверный ответ', TLE: 'Превышено время',
-  RE: 'Ошибка выполнения', CE: 'Ошибка компиляции', PENDING: 'Проверяется'
+  RE: 'Ошибка выполнения', CE: 'Ошибка компиляции', ERROR: 'Сбой проверки', PENDING: 'Проверяется'
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -23,6 +24,7 @@ export default function ProfilePage() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [progress, setProgress] = useState<TagProgress[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [oldPwd, setOldPwd] = useState('')
   const [newPwd, setNewPwd] = useState('')
   const [pwdError, setPwdError] = useState('')
@@ -32,20 +34,20 @@ export default function ProfilePage() {
   useEffect(() => {
     Promise.all([
       api.get<UserProfile>('/users/me'),
-      api.get<{ content: Submission[] }>('/submissions/my?size=10'),
+      api.get<{ content: Submission[] }>('/submissions/my?size=10&sort=submittedAt,desc'),
       api.get<TagProgress[]>('/users/me/progress'),
     ]).then(([p, s, pr]) => {
       setProfile(p.data)
       setSubmissions(s.data.content)
       setProgress(pr.data)
-    }).finally(() => setLoading(false))
+    }).catch(() => setLoadError(true)).finally(() => setLoading(false))
   }, [])
 
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault()
     setPwdError('')
     setPwdSuccess(false)
-    if (newPwd.length < 6) { setPwdError('Новый пароль должен быть не менее 6 символов'); return }
+    if (newPwd.length < 8) { setPwdError('Новый пароль должен быть не менее 8 символов'); return }
     setPwdLoading(true)
     try {
       await changePassword(oldPwd, newPwd)
@@ -59,6 +61,8 @@ export default function ProfilePage() {
       setPwdLoading(false)
     }
   }
+
+  if (loadError) return <RequestError />
 
   if (loading) return <div className="empty-state" style={{ marginTop: 80 }}><span className="spinner" /></div>
   if (!profile) return null
@@ -97,6 +101,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      <p className="alert alert-info" style={{ marginBottom: 24 }}>За первое принятое решение каждой задачи начисляется 10 баллов рейтинга. Повторные AC не добавляют баллы. Результаты соревнований считаются отдельно.</p>
       {progress.length > 0 && (
         <>
           <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, marginTop: 28 }}>Прогресс по темам</h2>
@@ -154,10 +159,10 @@ export default function ProfilePage() {
       <div className="card" style={{ padding: '20px 24px', maxWidth: 420 }}>
         <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
-            <label style={{ fontSize: 13, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>
+            <label htmlFor="old-password" style={{ fontSize: 13, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>
               Текущий пароль
             </label>
-            <input
+            <input id="old-password"
               type="password"
               className="input"
               value={oldPwd}
@@ -167,16 +172,16 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <label style={{ fontSize: 13, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>
+            <label htmlFor="new-password" style={{ fontSize: 13, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>
               Новый пароль
             </label>
-            <input
+            <input id="new-password"
               type="password"
               className="input"
               value={newPwd}
               onChange={e => setNewPwd(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               autoComplete="new-password"
             />
           </div>

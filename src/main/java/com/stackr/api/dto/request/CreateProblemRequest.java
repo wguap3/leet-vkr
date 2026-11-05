@@ -6,13 +6,16 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.util.Set;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Size;
 
 public record CreateProblemRequest(
-        @NotBlank String title,
+        @NotBlank @Size(max = 200) String title,
         @NotBlank String description,
         @NotNull Difficulty difficulty,
-        @Positive Integer timeLimitMs,
-        @Positive Integer memoryLimitMb,
+        @Min(100) @Max(30000) Integer timeLimitMs,
+        @Min(64) @Max(1024) Integer memoryLimitMb,
         Set<Long> tagIds,
         String codeTemplate
 ) {}

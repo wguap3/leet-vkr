@@ -34,6 +34,7 @@ class SubmissionServiceTest {
     @Mock ContestRepository contestRepository;
     @Mock UserRepository userRepository;
     @Mock SubmissionProcessor submissionProcessor;
+    @Mock ContestParticipationRepository participationRepository;
     @InjectMocks SubmissionService submissionService;
 
     private User user;
@@ -63,7 +64,7 @@ class SubmissionServiceTest {
     @DisplayName("submit: без контеста → возвращает SubmissionDto с PENDING")
     void submit_noContest_returnsPendingSubmission() {
         var req = new SubmitRequest(10L, "class Solution {}", null);
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(userRepository.findForSubmission(1L)).willReturn(Optional.of(user));
         given(problemRepository.findById(10L)).willReturn(Optional.of(problem));
         given(submissionRepository.save(any())).willReturn(pendingSubmission);
 
@@ -72,8 +73,8 @@ class SubmissionServiceTest {
         assertThat(dto.id()).isEqualTo(100L);
         assertThat(dto.verdict()).isEqualTo(Verdict.PENDING);
         assertThat(dto.problemId()).isEqualTo(10L);
-        // убеждаемся что async-процессор был вызван
-        then(submissionProcessor).should().processAsync(100L, 10L, 2000, 256);
+        // No background task may observe an uncommitted submission.
+        then(submissionProcessor).shouldHaveNoInteractions();
     }
 
     @Test
@@ -84,7 +85,7 @@ class SubmissionServiceTest {
         contest.setCreatedAt(LocalDateTime.now());
         var req = new SubmitRequest(10L, "code", 5L);
 
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(userRepository.findForSubmission(1L)).willReturn(Optional.of(user));
         given(problemRepository.findById(10L)).willReturn(Optional.of(problem));
         given(contestRepository.findById(5L)).willReturn(Optional.of(contest));
 
@@ -96,7 +97,7 @@ class SubmissionServiceTest {
     @Test
     @DisplayName("submit: пользователь не найден → EntityNotFoundException")
     void submit_userNotFound_throws() {
-        given(userRepository.findById(99L)).willReturn(Optional.empty());
+        given(userRepository.findForSubmission(99L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> submissionService.submit(new SubmitRequest(10L, "code", null), 99L))
                 .isInstanceOf(EntityNotFoundException.class);
@@ -105,11 +106,60 @@ class SubmissionServiceTest {
     @Test
     @DisplayName("submit: задача не найдена → EntityNotFoundException")
     void submit_problemNotFound_throws() {
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(userRepository.findForSubmission(1L)).willReturn(Optional.of(user));
         given(problemRepository.findById(99L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> submissionService.submit(new SubmitRequest(99L, "code", null), 1L))
                 .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    void submit_beforeContestStart_isRejected() {
+        var contest = activeContest();
+        contest.setStartTime(LocalDateTime.now().plusHours(1));
+        given(userRepository.findForSubmission(1L)).willReturn(Optional.of(user));
+        given(problemRepository.findById(10L)).willReturn(Optional.of(problem));
+        given(contestRepository.findById(5L)).willReturn(Optional.of(contest));
+        assertThatThrownBy(() -> submissionService.submit(new SubmitRequest(10L, "code", 5L), 1L))
+                .isInstanceOf(BusinessException.class).hasMessageContaining("not started");
+        then(submissionRepository).should(never()).save(any());
+    }
+
+    @Test
+    void submit_withoutContestRegistration_isRejected() {
+        given(userRepository.findForSubmission(1L)).willReturn(Optional.of(user));
+        given(problemRepository.findById(10L)).willReturn(Optional.of(problem));
+        given(contestRepository.findById(5L)).willReturn(Optional.of(activeContest()));
+        assertThatThrownBy(() -> submissionService.submit(new SubmitRequest(10L, "code", 5L), 1L))
+                .isInstanceOf(BusinessException.class).hasMessageContaining("Register");
+        then(submissionRepository).should(never()).save(any());
+    }
+
+    @Test
+    void submit_unrelatedProblem_isRejected() {
+        var contest = activeContest();
+        contest.setProblems(java.util.List.of());
+        given(userRepository.findForSubmission(1L)).willReturn(Optional.of(user));
+        given(problemRepository.findById(10L)).willReturn(Optional.of(problem));
+        given(contestRepository.findById(5L)).willReturn(Optional.of(contest));
+        given(participationRepository.existsByUserIdAndContestId(1L, 5L)).willReturn(true);
+        assertThatThrownBy(() -> submissionService.submit(new SubmitRequest(10L, "code", 5L), 1L))
+                .isInstanceOf(BusinessException.class).hasMessageContaining("does not belong");
+        then(submissionRepository).should(never()).save(any());
+    }
+
+    private Contest activeContest() {
+        return Contest.builder().id(5L).organizer(user).status(ContestStatus.RUNNING)
+                .startTime(LocalDateTime.now().minusHours(1)).endTime(LocalDateTime.now().plusHours(2))
+                .problems(java.util.List.of(problem)).build();
+    }
+
+    @Test
+    void getSubmission_runtimeStderrCannotRevealHiddenInput() {
+        pendingSubmission.setVerdict(Verdict.RE);
+        pendingSubmission.setErrorMessage("secret hidden-test input");
+        given(submissionRepository.findById(100L)).willReturn(Optional.of(pendingSubmission));
+        assertThat(submissionService.getSubmission(100L, 1L, false).errorMessage()).isNull();
     }
 
     // ── getSubmission ─────────────────────────────────────────────────────────
@@ -141,8 +191,8 @@ class SubmissionServiceTest {
     }
 
     @Test
-    @DisplayName("getSubmission: ORGANIZER видит код независимо от авторства")
-    void getSubmission_organizer_canSeeCode() {
+    @DisplayName("getSubmission: ADMIN видит код независимо от авторства")
+    void getSubmission_admin_canSeeCode() {
         var sub = Submission.builder().id(1L).user(user).problem(problem)
                 .verdict(Verdict.AC).sourceCode("secret code").build();
         sub.setSubmittedAt(LocalDateTime.now());

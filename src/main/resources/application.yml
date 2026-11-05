@@ -1,4 +1,8 @@
 spring:
+  task:
+    scheduling:
+      pool:
+        size: 2
   application:
     name: stackr-api
 
@@ -28,7 +32,7 @@ server:
 
 jwt:
   # Change this secret in production: openssl rand -base64 64
-  secret: ${JWT_SECRET:dGhpcyBpcyBhIHZlcnkgc2VjcmV0IGtleSBmb3Igc3RhY2ty}
+  secret: ${JWT_SECRET}
   access-token-ttl: 86400  # 24h
 
 runner:

@@ -60,10 +60,14 @@ export default function ContestStandingsPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    contestsApi.getContestStandings(Number(id))
-      .then(({ data }) => setStandings(data))
-      .catch(() => setError('Не удалось загрузить турнирную таблицу'))
-      .finally(() => setLoading(false))
+    let active = true
+    const refresh = () => contestsApi.getContestStandings(Number(id))
+      .then(({ data }) => { if (active) { setStandings(data); setError('') } })
+      .catch(() => { if (active) setError('Не удалось загрузить турнирную таблицу') })
+      .finally(() => { if (active) setLoading(false) })
+    refresh()
+    const timer = setInterval(refresh, 5000)
+    return () => { active = false; clearInterval(timer) }
   }, [id])
 
   if (loading) return <div className="empty-state" style={{ marginTop: 80 }}><span className="spinner" /></div>
@@ -74,6 +78,7 @@ export default function ContestStandingsPage() {
 
   return (
     <div className="page-container">
+      <p className="alert alert-info" style={{ marginBottom: 24 }}>Выше участник с большим числом решённых задач, затем с меньшим штрафом. За решённую задачу: минуты до первого AC + 20 минут за каждую неверную попытку до него. Сбои проверки не штрафуются.</p>
       <div className={styles.header}>
         <div>
           <Link to={`/contests/${id}`} className={styles.back}>← Контест</Link>
@@ -100,7 +105,7 @@ export default function ContestStandingsPage() {
                 <th className={styles.thPenalty}>Штраф</th>
                 {problems.map((p: Problem) => (
                   <th key={p.id} className={styles.thProb}>
-                    <Link to={`/problems/${p.id}`} title={p.title}
+                    <Link to={`/problems/${p.id}?contestId=${id}`} title={p.title}
                       style={{ color: 'var(--text-2)', textDecoration: 'none', fontWeight: 600 }}>
                       {p.letter}
                     </Link>

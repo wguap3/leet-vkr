@@ -1,40 +1,67 @@
+name: stackr-local
 services:
   postgres:
     image: postgres:15-alpine
     environment:
       POSTGRES_DB: stackr_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: secret
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: stackr
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/dev.sh first}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U stackr -d stackr_db"]
       interval: 5s
       timeout: 3s
-      retries: 5
+      retries: 20
 
   api:
     build: .
     ports:
-      - "8080:8080"
+      - "127.0.0.1:${API_PORT:-8080}:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/stackr_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: secret
+      SPRING_DATASOURCE_USERNAME: stackr
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/dev.sh first}
+      JWT_SECRET: ${JWT_SECRET:?Run scripts/dev.sh first}
       RUNNER_URL: http://runner:8081
-      ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000
+      ALLOWED_ORIGINS: http://localhost:${WEB_PORT:-3100},http://127.0.0.1:${WEB_PORT:-3100},http://localhost:5173
     depends_on:
       postgres:
         condition: service_healthy
+      runner:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/api/tags"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
 
   runner:
     build: ./runner
-    ports:
-      - "8081:8081"
+    environment:
+      SANDBOX_IMAGE: ${SANDBOX_IMAGE:-eclipse-temurin:21-jdk-alpine}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8081/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  web:
+    build: ./web
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3100}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
 
 volumes:
   postgres_data:

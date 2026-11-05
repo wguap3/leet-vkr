@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import * as usersApi from '../api/users'
 import type { Role } from '../types'
 import styles from './AdminPanel.module.css'
+import TagManager from '../components/TagManager'
+import { useAuthStore } from '../store/authStore'
 
 const ROLES: Role[] = ['CONTESTANT', 'ORGANIZER', 'ADMIN']
 
@@ -18,6 +20,9 @@ const ROLE_COLORS: Record<Role, string> = {
 }
 
 export default function AdminPanel() {
+  const currentUser = useAuthStore(s => s.user)
+  const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
   const [users, setUsers] = useState<usersApi.UserAdmin[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
@@ -26,15 +31,16 @@ export default function AdminPanel() {
 
   useEffect(() => {
     load()
-  }, [page])
+  }, [page, search])
 
   function load() {
     setLoading(true)
-    usersApi.getAllUsers({ page, size: 20 })
+    usersApi.getAllUsers({ page, size: 20, search })
       .then(({ data }) => {
         setUsers(data.content)
         setTotalPages(data.totalPages)
       })
+      .catch(() => setError('Не удалось загрузить пользователей'))
       .finally(() => setLoading(false))
   }
 
@@ -43,7 +49,7 @@ export default function AdminPanel() {
     try {
       await usersApi.changeRole(id, role)
       setUsers(u => u.map(x => x.id === id ? { ...x, role } : x))
-    } finally {
+    } catch (err: any) { setError(err.response?.data?.message || 'Не удалось сохранить изменения') } finally {
       setPending(p => ({ ...p, [id]: false }))
     }
   }
@@ -53,7 +59,7 @@ export default function AdminPanel() {
     try {
       await usersApi.setActive(id, !current)
       setUsers(u => u.map(x => x.id === id ? { ...x, active: !current } : x))
-    } finally {
+    } catch (err: any) { setError(err.response?.data?.message || 'Не удалось сохранить изменения') } finally {
       setPending(p => ({ ...p, [id]: false }))
     }
   }
@@ -69,6 +75,8 @@ export default function AdminPanel() {
         </div>
       </div>
 
+      <label style={{ marginBottom: 20, maxWidth: 420 }}>Поиск пользователя<input placeholder="Имя или email…" value={search} onChange={e => { setSearch(e.target.value); setPage(0) }} /></label>
+      {error && <div className="alert alert-error" role="alert">{error}</div>}
       <div className="card" style={{ overflow: 'hidden' }}>
         {loading ? (
           <div className="empty-state"><span className="spinner" /></div>
@@ -100,10 +108,10 @@ export default function AdminPanel() {
                   <td style={{ color: 'var(--text-2)' }}>{u.email}</td>
                   <td>
                     <select
-                      className={styles.roleSelect}
+                      aria-label={`Роль пользователя ${u.username}`} className={styles.roleSelect}
                       style={{ color: ROLE_COLORS[u.role] }}
                       value={u.role}
-                      disabled={pending[u.id]}
+                      disabled={pending[u.id] || u.id === currentUser?.id}
                       onChange={e => handleRoleChange(u.id, e.target.value as Role)}
                     >
                       {ROLES.map(r => (
@@ -120,7 +128,7 @@ export default function AdminPanel() {
                   <td>
                     <button
                       className={`btn btn-sm ${u.active ? 'btn-outline' : 'btn-secondary'}`}
-                      disabled={pending[u.id]}
+                      disabled={pending[u.id] || u.id === currentUser?.id}
                       onClick={() => handleToggleActive(u.id, u.active)}
                     >
                       {pending[u.id] ? <span className="spinner" style={{ width: 12, height: 12 }} /> : null}
@@ -147,6 +155,7 @@ export default function AdminPanel() {
           </button>
         </div>
       )}
+      <TagManager />
     </div>
   )
 }

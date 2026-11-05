@@ -30,7 +30,7 @@ export default function CreateContestPage() {
 
   useEffect(() => {
     // load all published problems (up to 100)
-    problemsApi.getProblems({ size: 200 })
+    problemsApi.getProblems({ size: 200, mine: true })
       .then(r => setProblems(r.data.content))
       .finally(() => setLoadingProblems(false))
   }, [])
@@ -50,8 +50,8 @@ export default function CreateContestPage() {
       const { data: contest } = await contestsApi.createContest({
         title: title.trim(),
         description: description.trim(),
-        startTime: new Date(startTime).toISOString().slice(0, 19),
-        endTime: new Date(endTime).toISOString().slice(0, 19),
+        startTime: new Date(startTime).toISOString(),
+        endTime: new Date(endTime).toISOString(),
         problemIds: selectedProblems,
         isPublic,
       })
@@ -80,11 +80,11 @@ export default function CreateContestPage() {
             <h3 className={styles.sectionTitle}>Основное</h3>
             <div className={styles.field}>
               <label>Название *</label>
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Например: Открытый чемпионат Stackr #2" />
+              <input aria-label="Название *" value={title} onChange={e => setTitle(e.target.value)} placeholder="Например: Открытый чемпионат Stackr #2" />
             </div>
             <div className={styles.field}>
               <label>Описание <span className={styles.hint}>(поддерживается Markdown)</span></label>
-              <textarea
+              <textarea aria-label="Описание (поддерживается Markdown)"
                 className={styles.textarea}
                 rows={4}
                 value={description}
@@ -95,11 +95,11 @@ export default function CreateContestPage() {
             <div className={styles.row}>
               <div className={styles.field}>
                 <label>Начало *</label>
-                <input type="datetime-local" value={startTime} onChange={e => setStartTime(e.target.value)} />
+                <input aria-label="Начало *" type="datetime-local" value={startTime} onChange={e => setStartTime(e.target.value)} />
               </div>
               <div className={styles.field}>
                 <label>Конец *</label>
-                <input type="datetime-local" value={endTime} onChange={e => setEndTime(e.target.value)} />
+                <input aria-label="Конец *" type="datetime-local" value={endTime} onChange={e => setEndTime(e.target.value)} />
               </div>
             </div>
             <label className={styles.checkLabel} style={{ fontSize: 14 }}>
