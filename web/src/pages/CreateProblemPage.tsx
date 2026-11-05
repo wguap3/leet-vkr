@@ -169,7 +169,7 @@ export default function CreateProblemPage() {
         <div className="card">
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Условие задачи * <span className={styles.hint}>(поддерживается Markdown)</span></h3>
-            <textarea
+            <textarea aria-label="Условие задачи"
               className={styles.textarea}
               rows={12}
               value={description}
@@ -185,6 +185,7 @@ export default function CreateProblemPage() {
             <h3 className={styles.sectionTitle}>Шаблон кода</h3>
             <textarea
               className={styles.textarea}
+              aria-label="Шаблон кода"
               rows={8}
               value={codeTemplate}
               onChange={e => setCodeTemplate(e.target.value)}

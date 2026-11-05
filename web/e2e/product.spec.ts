@@ -218,7 +218,7 @@ test('two contestants have consistent ranks and wrong-answer penalties in both t
   expect(old.map((r: any) => [r.userId, r.rank, r.penalty])).toEqual(board.rows.map((r: any) => [r.userId, r.rank, r.penalty]))
   expect(old.find((r: any) => r.userId === user.opponent.id).score).toBe(100)
   const analytics = await (await request.get(`/api/contests/${data.active.id}/analytics`, { headers: auth('org') })).json()
-  expect(analytics.rows.map((r: any) => r.userId)).toEqual(board.rows.map((r: any) => r.userId))
+  expect(analytics.participants.map((r: any) => r.userId)).toEqual(board.rows.map((r: any) => r.userId))
 })
 test('access and refresh tokens cannot be substituted for one another', async ({ request }) => {
   expect((await request.post('/api/auth/refresh', { headers: { 'Content-Type': 'text/plain' }, data: user.student.token })).status()).toBe(401)
